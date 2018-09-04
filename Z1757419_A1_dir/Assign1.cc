@@ -11,7 +11,7 @@
 #include <iostream>
 #include <unistd.h>     // fork
 #include <wait.h>       // wait
-#include <stdlib.h>     //system
+#include <stdlib.h>     // system
 
 using namespace std;
 
