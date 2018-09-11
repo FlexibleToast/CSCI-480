@@ -1,64 +1,78 @@
 /*********************************************************************
-   PROGRAM:    CSCI 480 Assignment 2
-   PROGRAMMER: Joseph McDade
-   LOGON ID:   z1757419
-   DUE DATE:   09/18/2018
+   PROGRAM:			CSCI 480 Assignment 2
+   PROGRAMMER:	Joseph McDade
+   LOGON ID:		z1757419
+   DUE DATE:		09/18/2018
 
-   FUNCTION:   This program adds practice of using pipe()
+   FUNCTION:		This program adds practice of using pipe() to relay
+	 							information between processes
 *********************************************************************/
 
 #include <iostream>
 #include <unistd.h>     // fork,pipe
 #include <wait.h>       // wait
 #include <stdlib.h>     // system
+#include <string>				// string
 
 using namespace std;
 
 // Prototyping statements
 
 int main() {
+	// Disable cout buffer
+	cout << unitbuf;
   // Create file descriptors
   int par_fd[2];
   int child_fd[2];
-	int grand_fd[2];
-
-  // Create pipes
-  pipeA = pipe(par_fd);
-  pipeB = pipe(child_fd);
-  pipeC = pipe(grand_fd);
+	string buffer;
+	// int grand_fd[2];
+  // pipeC = pipe(grand_fd);
   // Check if any pipe has an error
-  if(pipeA == -1){
-    exit(-5);
-  } // etc...
+  if(pipe(par_fd) == -1){
+		std::cout << "First pipe failed" << '\n';
+		exit(-5);
+  }
+	if(pipe(child_fd) == -1){
+		std::cout << "Second pip failed" << '\n';
+		exit(-5);
+	}
 
   // Create child processes
-  childPID = fork();
+  pid_t childPID = fork();
   // Check if error
   if(childPID == -1){
-    std::cerr << "Child process failed to start" << '\n';
-    exit();
+    std::cout << "Child process failed to start" << '\n';
+    exit(-5);
   } else if(childPID > 0)
   { ////////// Parent process //////////
-    // Close pipeA read
-    // Close pipeC write
+    close(par_fd[0]); 	// Close pipeA read end
+    // close(grand_fd[1]);	// Close pipeC write end
     // Call parent process
-    wait(childPID);
+		std::cout << "Test of the pipeA" << '\n';
+		string answer = "42 is the answer";
+		std::cout << answer << '\n';
+		write(par_fd[1], answer.c_str(), answer.length()+1);
+    wait(0);
+		exit(0);
   } else { // Child process
     // Create grand child process
-    grandPID = fork();
+    pid_t grandPID = fork();
     //Check if error
     if(grandPID == -1){
-      std::cerr << "Grand child process failed to start" << '\n';
-      exit();
+      std::cout << "Grand child process failed to start" << '\n';
+      exit(-5);
     } else if(grandPID > 0)
     { ////////// Child process //////////
-      // Close pipeA write
-      // Close pipeB read
-      // Read pipeA
+      close(par_fd[1]);		// Close pipeA write end
+			close(child_fd[0]);	// Close pipeB read end
       // Call child function
       // Write pipeB
-      wait(grandPID);
+			std::cout << "This is the child" << '\n';
+			string ultimateAnswer = read(par_fd[0], answer, strlen(answer)+1);
+			std::cout << "The ultinate answer is: " << ultimateAnswer << '\n';
+      wait(0);
     } else { ////////// Grand child process //////////
+			std::cout << "This is the grandChild" << '\n';
       // Close pipeB write
       // Close pipeC read
       // Read pipeB
@@ -73,19 +87,19 @@ int main() {
 Create char array value and buffer
 create int M
 while M is less than 99999999
-  cerr value
+  cout value
   perform maths()
   write to pipeA
   read pipeC
   convert to M */
 
 /* Child function
-cerr value
+cout value
 perform maths()
 return value */
 
 /* Grand child function
-cerr value
+cout value
 perform maths()
 return value */
 
