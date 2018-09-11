@@ -16,44 +16,46 @@
 using namespace std;
 
 int main() {
-    std::cerr << "I am the original process with PID: " << getpid()
+		// Disable buffer for cout
+		cout << unitbuf;
+    std::cout << "I am the original process with PID: " << getpid()
     << ", my parent has PID: " << getppid() << '\n';
     // Call first fork
-    std::cerr << "Calling first fork" << '\n';
+    std::cout << "Calling first fork" << '\n';
     pid_t child = fork();
     if(child == -1){ // If the first fork fails
-        std::cerr << "First fork failed" << '\n';
+        std::cout << "First fork failed" << '\n';
     } else if (child == 0)
     { // If in the first fork, this is the child
-        std::cerr << "I am the child with PID: " << getpid()
+        std::cout << "I am the child with PID: " << getpid()
             << ", my parent has PID: " << getppid() << '\n';
         // Call the second fork
-        std::cerr << "Calling second fork" << '\n';
+        std::cout << "Calling second fork" << '\n';
         pid_t grandChild = fork();
         if(grandChild == -1){ // If the second fork fails
-            std::cerr << "Second fork failed" << '\n';
+            std::cout << "Second fork failed" << '\n';
         } else if (grandChild == 0)
         { // If in the second fork, this is the grandchild
-            std::cerr << "I am the grandchild process with PID: " << getpid()
+            std::cout << "I am the grandchild process with PID: " << getpid()
                 << ", my parent has PID:  " << getppid() << '\n';
             // Exit the grandchild
-            std::cerr << "Grandchild about to exit" << '\n';
+            std::cout << "Grandchild about to exit" << '\n';
             exit(0);
         } else { // Else in child process
-            std::cerr << "I am the child with PID: " << getpid()
+            std::cout << "I am the child with PID: " << getpid()
                 << ", my parent has PID: " << getppid() << '\n';
             wait(0); // wait for grandchild to terminate
-            std::cerr << "Child about to exit" << '\n';
+            std::cout << "Child about to exit" << '\n';
             exit(0);
         }
     } else { // Else in parent process
-        std::cerr << "I am the parent process with PID: " << getpid()
+        std::cout << "I am the parent process with PID: " << getpid()
             << ", my prant has PID: " << getppid() << '\n';
         // Call ps using system
-        std::cerr << "About to call ps" << '\n';
+        std::cout << "About to call ps" << '\n';
         system("ps");
         wait(0); // wait for child to terminate
-        std::cerr << "Parent about to exit" << '\n';
+        std::cout << "Parent about to exit" << '\n';
         exit(0);
     }
     return 0;
