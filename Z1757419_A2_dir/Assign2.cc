@@ -3,20 +3,24 @@
    PROGRAMMER:	Joseph McDade
    LOGON ID:		z1757419
    DUE DATE:		09/18/2018
+	 Note:				Uses hard tabs set to display as 2 spaces
 
    FUNCTION:		This program adds practice of using pipe() to relay
-	 							information between processes
+	 							information between processes.
 *********************************************************************/
 
 #include <iostream>
 #include <unistd.h>     // fork,pipe
 #include <wait.h>       // wait
 #include <stdlib.h>     // system
-#include <string>				// string
+#include <string.h>			// atoi, itoa,
 
 using namespace std;
 
 // Prototyping statements
+
+// Set global variables
+const int SIZE = 90;
 
 int main() {
 	// Disable cout buffer
@@ -24,7 +28,6 @@ int main() {
   // Create file descriptors
   int par_fd[2];
   int child_fd[2];
-	string buffer;
 	// int grand_fd[2];
   // pipeC = pipe(grand_fd);
   // Check if any pipe has an error
@@ -49,9 +52,9 @@ int main() {
     // close(grand_fd[1]);	// Close pipeC write end
     // Call parent process
 		std::cout << "Test of the pipeA" << '\n';
-		string answer = "42 is the answer";
-		std::cout << answer << '\n';
-		write(par_fd[1], answer.c_str(), answer.length()+1);
+		const char *hello = "42 is the answer and the answer is: ";
+		std::cout << hello << '\n';
+		write(par_fd[1], hello, strlen(hello)+1);
     wait(0);
 		exit(0);
   } else { // Child process
@@ -67,9 +70,11 @@ int main() {
 			close(child_fd[0]);	// Close pipeB read end
       // Call child function
       // Write pipeB
+			char buffer[SIZE] = "1";
 			std::cout << "This is the child" << '\n';
-			string ultimateAnswer = read(par_fd[0], answer, strlen(answer)+1);
-			std::cout << "The ultinate answer is: " << ultimateAnswer << '\n';
+			read(par_fd[0], buffer, SIZE);
+			int ans = atoi(buffer);
+			std::cout << buffer << ans << '\n';
       wait(0);
     } else { ////////// Grand child process //////////
 			std::cout << "This is the grandChild" << '\n';
