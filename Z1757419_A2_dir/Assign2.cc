@@ -60,8 +60,6 @@ int main() {
     exit(-5);
   }	else if(childPID > 0)
   { /********* Parent process *********/
-    close(par_fd[READ_FD]); 		// Close pipeA read end
-    close(grand_fd[WRITE_FD]);	// Close pipeC write end
 		const char *par = "Parent:";
 		parentWork(par_fd, grand_fd, par);
 		exit(0);
@@ -74,15 +72,11 @@ int main() {
       exit(-5);
     }	else if(grandPID > 0)
     { /********* Child process *********/
-      close(par_fd[WRITE_FD]);	// Close pipeA write end
-			close(child_fd[READ_FD]);	// Close pipeB read end
 			const char *child = "Child:";
 			childrenWork(child_fd, par_fd, child);
 			wait(0);
 			exit(0);
     }	else { /********* Grandchild process *********/
-			close(child_fd[WRITE_FD]);	// Close pipeB write end
-			close(grand_fd[READ_FD]);		// Close pipeC read end
 			const char *grand = "Grandchild:";
 			childrenWork(grand_fd, child_fd, grand);
 			exit(0);
@@ -102,8 +96,8 @@ Arguments:	write_fd	- File descriptor of pipe to write to
 Returns:		Nothing
 *******************************************************************************/
 void parentWork(int write_fd[], int read_fd[], const char name[]) {
-	close(write_fd[READ_FD]);	// Close pipeA read end
-	close(read_fd[WRITE_FD]);	// Close pipeC write end
+	close(write_fd[READ_FD]);	// Close read end of write pipe
+	close(read_fd[WRITE_FD]);	// Close write end of read pipe
 	char value[SIZE] = "1";		// Prime read
 	printValue(name, value);
 	while (atoi(value) < TARGET)
@@ -130,8 +124,8 @@ Arguments:	write_fd	- File descriptor of pipe to write to
 Returns:		Nothing
 *******************************************************************************/
 void childrenWork(int write_fd[], int read_fd[], const char name[]) {
-	close(write_fd[READ_FD]);	// Close pipeA read end
-	close(read_fd[WRITE_FD]);	// Close pipeC write end
+	close(write_fd[READ_FD]);	// Close read end of write pipe
+	close(read_fd[WRITE_FD]);	// Close write end of read pipe
 	char value[SIZE];
 	read(read_fd[READ_FD], value, SIZE);	// Prime read
 	while (atoi(value) < TARGET)
