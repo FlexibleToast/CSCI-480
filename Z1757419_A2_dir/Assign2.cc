@@ -19,66 +19,73 @@
 #include <iomanip>			// setw
 #include <unistd.h>     // fork,pipe
 #include <wait.h>       // wait
-#include <stdlib.h>     // system, itoa, atoi
+#include <stdlib.h>     // system, atoi
 
 using namespace std;
 
 // Prototyping statements
+void work(int write_fd[], int read_fd[], const char name[],
+	bool init = false);
 void printValue(const char proc[], char value[]);
 void performMaths(char value[]);
-void parentWork(int write_fd[], int read_fd[], const char name[]);
-void childrenWork(int write_fd[], int read_fd[], const char name[]);
 
 // Set global constants
 const int READ_FD = 0;
 const int WRITE_FD = 1;
-const int SIZE = 15;
-const int TARGET = 999999999;
+const int SIZE = 10;
+const int TARGET = 99999999;
 
 int main() {
 	// Disable cout buffer
 	cout << unitbuf;
   // Create file descriptors
-  int par_fd[2];
-  int child_fd[2];
-	int grand_fd[2];
+  int par_fd[2], child_fd[2], grand_fd[2];
   // Create and check pipes for errors
   if(pipe(par_fd) == -1){
-		std::cout << "First pipe failed" << '\n';
+		std::cerr << "First pipe failed" << '\n';
 		exit(-5);}
 	if(pipe(child_fd) == -1){
-		std::cout << "Second pipe failed" << '\n';
+		std::cerr << "Second pipe failed" << '\n';
 		exit(-5);}
 	if(pipe(grand_fd) == -1){
-		std::cout << "Third pipe failed" << '\n';
+		std::cerr << "Third pipe failed" << '\n';
 		exit(-5);}
   // Create child processes
   pid_t childPID = fork();
   // Check if error creating fork
   if(childPID == -1){
-    std::cout << "Child process failed to start" << '\n';
+    std::cerr << "Child process failed to start" << '\n';
     exit(-5);
   }	else if(childPID > 0)
   { /********* Parent process *********/
+		// Close unused pipeB
+		close(child_fd[READ_FD]);
+		close(child_fd[WRITE_FD]);
 		const char *par = "Parent:";
-		parentWork(par_fd, grand_fd, par);
+		work(par_fd, grand_fd, par, true);
 		exit(0);
   }	else { // Child process
     // Create grandchild process
     pid_t grandPID = fork();
     //Check if error creating fork
     if(grandPID == -1){
-      std::cout << "Grandchild process failed to start" << '\n';
+      std::cerr << "Grandchild process failed to start" << '\n';
       exit(-5);
     }	else if(grandPID > 0)
     { /********* Child process *********/
+			// Close unused pipeC
+			close(grand_fd[READ_FD]);
+			close(grand_fd[WRITE_FD]);
 			const char *child = "Child:";
-			childrenWork(child_fd, par_fd, child);
+			work(child_fd, par_fd, child);
 			wait(0);
 			exit(0);
     }	else { /********* Grandchild process *********/
+			// Close unused pipeA
+			close(par_fd[READ_FD]);
+			close(par_fd[WRITE_FD]);
 			const char *grand = "Grandchild:";
-			childrenWork(grand_fd, child_fd, grand);
+			work(grand_fd, child_fd, grand);
 			exit(0);
     }
   }
@@ -86,50 +93,29 @@ int main() {
 }
 /////////////////////////////////  Functions  //////////////////////////////////
 /*******************************************************************************
-Function:		void parentWork(int write_fd[], int read_fd[], const char name[])
-Use:				Performs the work of the parent. Initializes value and sending
-						through the pipes. As long as the value is less than TARGET,
-						it continues to process the value and send through pipe.
+Function:		void work(int write_fd[], int read_fd[], const char name[],
+						bool init)
+Use:				Prints the current value and performs the math operation
+						4 * value + 3. If the calling process is the initial process, value
+						is left set to 1. Otherwise the value is initialized by being
+						received from a pipe.
 Arguments:	write_fd	- File descriptor of pipe to write to
 						read_fd		- File descriptor of pipe to read from
 						name 			- Name of process calling function
+						init			- True or false if the process is initializing the value
+												to have the maths performed on. Defaults to false.
 Returns:		Nothing
 *******************************************************************************/
-void parentWork(int write_fd[], int read_fd[], const char name[]) {
+void work(int write_fd[], int read_fd[], const char name[],bool init) {
 	close(write_fd[READ_FD]);	// Close read end of write pipe
 	close(read_fd[WRITE_FD]);	// Close write end of read pipe
-	char value[SIZE] = "1";		// Prime read
-	printValue(name, value);
+	// Prime the read
+	char value[SIZE] = "1";
+	if(!init){ // If not the initial process, receive receive value from pipe
+		read(read_fd[READ_FD], value, SIZE);
+	}
 	while (atoi(value) < TARGET)
 	{	//While value is still less than TARGET
-		performMaths(value);
-		write(write_fd[WRITE_FD], value, SIZE);
-		read(read_fd[READ_FD], value, SIZE);
-		printValue(name, value);
-	} // Write large value to pipe so child processes can exit
-	write(write_fd[WRITE_FD], value, SIZE);
-	// Close pipes
-	close(read_fd[READ_FD]);
-	close(write_fd[WRITE_FD]);
-}
-
-/*******************************************************************************
-Function:		void childrenWork(int write_fd[], int read_fd[], const char name[])
-Use:				Performs the work of the child. Receives value from a pipe. As long
-						as the value is less than TARGET,it continues to process the value
-						and send through pipe.
-Arguments:	write_fd	- File descriptor of pipe to write to
-						read_fd		- File descriptor of pipe to read from
-						name 			- Name of process calling function
-Returns:		Nothing
-*******************************************************************************/
-void childrenWork(int write_fd[], int read_fd[], const char name[]) {
-	close(write_fd[READ_FD]);	// Close read end of write pipe
-	close(read_fd[WRITE_FD]);	// Close write end of read pipe
-	char value[SIZE];
-	read(read_fd[READ_FD], value, SIZE);	// Prime read
-	while (atoi(value) < TARGET)
-	{	// While value is still less than TARGET
 		printValue(name, value);
 		performMaths(value);
 		write(write_fd[WRITE_FD], value, SIZE);
