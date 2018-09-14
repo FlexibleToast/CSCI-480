@@ -30,10 +30,10 @@ void printValue(const char proc[], char value[]);
 void performMaths(char value[]);
 
 // Set global constants
-const int READ_FD = 0;
-const int WRITE_FD = 1;
-const int SIZE = 10;
-const int TARGET = 99999999;
+#define READ_FD  0
+#define WRITE_FD 1
+#define SIZE 10
+#define TARGET 99999999
 
 int main() {
 	// Disable cout buffer
