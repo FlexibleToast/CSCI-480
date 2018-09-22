@@ -17,7 +17,7 @@
 
 #include <iostream>
 #include <iomanip>			// setw
-#include <unistd.h>     // fork,pipe
+#include <unistd.h>     // fork, pipe
 #include <wait.h>       // wait
 #include <stdlib.h>     // system, atoi
 
