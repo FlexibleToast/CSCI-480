@@ -26,9 +26,9 @@ using namespace std;
 
 int main() {
 	// Create variables
-	char *arg, *command;
+	char *arg, *command, *child_command;
 	char input[INPUT_SIZE+1] = "y";
-	deque<char*> argq;
+	deque<char*> argq, child_argq;
 
 	// Disable cout buffer
 	cout << unitbuf;
@@ -40,6 +40,31 @@ int main() {
 		arg = strtok(input, " ");
 		argq.push_back(arg);
 		while(arg != NULL){
+			if(strcmp(arg, "||") == 0)
+			{
+				arg = strtok(NULL, " ");
+				child_argq.push_back(arg);
+				while(arg != NULL)
+				{
+					arg = strtok(NULL, " ");
+					child_argq.push_back(arg);
+				}
+				child_argq.pop_back();
+				child_command = child_argq[0];
+				child_argq.pop_front();
+				char *child_args[child_argq.size()];
+				int i = 0;
+				while(!child_argq.empty())
+				{
+					child_args[i++] = child_argq[0];
+					child_argq.pop_front();
+				}
+				for(unsigned i = 0; i < sizeof(child_args)/sizeof(child_args[0]); i++)
+				{
+					cout << child_args[i] << '\n';
+				}
+				argq.pop_back();
+			}
 			arg = strtok(NULL, " ");
 			argq.push_back(arg);
 		}
@@ -53,20 +78,27 @@ int main() {
 			args[i++] = argq[0];
 			argq.pop_front();
 		}
-		cout << command << '\n';
 		pid_t PID = fork();
 		if(PID < 0){
 			std::cerr << "Failed to fork" << '\n';
 		} else if (PID > 0){
 			// Parent process
 			wait(0);
+			std::cout << command << '\n';
+			for(unsigned i = 0; i < sizeof(args)/sizeof(args[0]); i++)
+			{
+				std::cout << args[i] << '\n';
+			}
 		} else {
 			// Child process
 			//std::cout << "Child command:" << '\n' << child_command << '\n';
-			for(unsigned i = 0; i < sizeof(args)/sizeof(args[0]); i++)
-			{
-				cout << args[i] << '\n';
-			}
+			if(child_command != NULL)
+				cout << "child command: " << child_command << '\n';
+			// for(unsigned i = 0; i < sizeof(child_args)/sizeof(child_args[0]); i++)
+			// {
+			// 	cout << child_args[i] << '\n';
+			// }
+			child_command = NULL;
 			exit(0);
 		}
 	}
