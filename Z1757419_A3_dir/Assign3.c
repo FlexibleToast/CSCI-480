@@ -9,14 +9,11 @@
 	 							with the output of one piped to the second using the '||' string
 *******************************************************************************/
 
-#include <iostream>
-#include <cstring>		// strtok
+#include <stdio.h>
+#include <string.h>		// strtok
 #include <unistd.h>		// fork, pipe
 #include <wait.h>			// wait
 #include <stdlib.h>		// system
-#include <deque>
-
-using namespace std;
 
 // Prototyping statements
 
@@ -27,30 +24,38 @@ using namespace std;
 int main() {
 	// Create variables
 	char *buffer;
-	char **args = (char**)malloc(sizeof(args[0]) * 1);
-	char input[INPUT_SIZE+1] = "y";
-	// Disable cout buffer
-	cout << unitbuf;
-	// while (strcmp(input, "q") && strcmp(input, "quit") && strcmp(input, "exit"))
-	// {
-		// Ask user for input
-		cout << "480shell> ";
-		fgets(input, INPUT_SIZE, stdin);
-		int i = 0;
+	char input[INPUT_SIZE];
+	// Disable stdout buffer
+	setbuf(stdout, NULL);
+	// Ask user for input
+	printf("480shell> ");
+	fgets(input, INPUT_SIZE, stdin);
+	input[strlen(input)-1] = 0;
+	while (strcmp(input, "q") != 0 && strcmp(input, "quit") != 0
+	 	&& strcmp(input, "exit") != 0)
+	{
+		char **args = malloc(sizeof(args[0]) * 1);
+		size_t argSize = 0;
 		buffer = strtok(input, " ");
 		while(buffer != NULL){
-			args[i++] = buffer;
+			args[argSize] = buffer;
 			buffer = strtok(NULL, " ");
 			if(buffer != NULL){
-				args = (char**)realloc(args, (i+1)*sizeof(args[0]));
+				argSize++;
+				args = realloc(args, (argSize+1)*sizeof(args[0]));
 			}
 		}
-		i = 0;
-		while(args[i] != NULL)
+		argSize++;
+		printf("%d\n", (int)argSize );
+		for(size_t i = 0; i < argSize; i++)
 		{
-			cout << args[i++] << '\n';
+			printf("%s\n", args[i]);
 		}
-	// }
+		// Ask user for input
+		printf("480shell> ");
+		fgets(input, INPUT_SIZE, stdin);
+		input[strlen(input)-1] = 0;
+	}
   return 0;
 }
 /////////////////////////////////  Functions  //////////////////////////////////
