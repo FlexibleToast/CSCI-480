@@ -23,7 +23,7 @@
 
 int main() {
 	// Create variables
-	char *buffer;
+	char *buffer, *command, *child_command;
 	char input[INPUT_SIZE];
 	// Disable stdout buffer
 	setbuf(stdout, NULL);
@@ -35,21 +35,79 @@ int main() {
 	 	&& strcmp(input, "exit") != 0)
 	{
 		char **args = malloc(sizeof(args[0]) * 1);
+		char **child_args = malloc(sizeof(child_args[0]) * 1);
 		size_t argSize = 0;
+		size_t childArgSize = 0;
 		buffer = strtok(input, " ");
+		command = buffer;
+		buffer = strtok(NULL, " ");
 		while(buffer != NULL){
-			args[argSize] = buffer;
+			args[argSize++] = buffer;
 			buffer = strtok(NULL, " ");
-			if(buffer != NULL){
-				argSize++;
+			if(buffer != NULL)
+			{
+				if(strcmp(buffer, "||") == 0)
+				{
+					child_command = buffer = strtok(NULL, " ");
+					buffer = strtok(NULL, " ");
+					while(buffer != NULL)
+					{
+						child_args[childArgSize++] = buffer;
+						buffer = strtok(NULL, " ");
+						if(buffer != NULL)
+						{
+							child_args = realloc(child_args,
+								(childArgSize+1)*sizeof(child_args[0]));
+						}
+					}
+					break;
+				}
 				args = realloc(args, (argSize+1)*sizeof(args[0]));
 			}
 		}
-		argSize++;
-		printf("%d\n", (int)argSize );
-		for(size_t i = 0; i < argSize; i++)
+		pid_t child = fork();
+		if(child < 0)
 		{
-			printf("%s\n", args[i]);
+			fprintf(stderr, "Child failed to fork\n");
+		} else if(child > 0)
+		{
+			// Parent
+			// Test area
+
+			printf("%s\n", command);
+			if(argSize > 0)
+			{
+				for(size_t i = 0; i < argSize; i++)
+				{
+					printf("%s\n", args[i]);
+				}
+			}
+			wait(0);
+			if(child_command != NULL)
+			{
+				child_command = NULL;
+			}
+			if(childArgSize > 0)
+			{
+				free(child_args);
+				childArgSize = 0;
+			}
+		} else {
+			if(child_command != NULL)
+			{
+				printf("%s\n", child_command);
+				child_command = NULL;
+			}
+			if(childArgSize > 0)
+			{
+				for(size_t i = 0; i < childArgSize; i++)
+				{
+					printf("%s\n", child_args[i]);
+				}
+				free(child_args);
+				childArgSize = 0;
+			}
+			exit(0);
 		}
 		// Ask user for input
 		printf("480shell> ");
