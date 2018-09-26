@@ -10,12 +10,15 @@
 *******************************************************************************/
 
 #include <stdio.h>
+#include <stdbool.h>	// bool
 #include <string.h>		// strtok
 #include <unistd.h>		// fork, pipe
 #include <wait.h>			// wait
 #include <stdlib.h>		// system
 
 // Prototyping statements
+bool find_pipe(char *input, char **output);
+char *tokenize(char *input, char **args, size_t *new_size);
 
 // Set global constants
 #define INPUT_SIZE 256
@@ -23,8 +26,10 @@
 
 int main() {
 	// Create variables
-	char *buffer, *command, *child_command;
+	char *buffer, *command[2];
 	char input[INPUT_SIZE];
+	bool pipe_found = false;
+	pid_t child1, child2;
 	// Disable stdout buffer
 	setbuf(stdout, NULL);
 	// Ask user for input
@@ -34,81 +39,43 @@ int main() {
 	while (strcmp(input, "q") != 0 && strcmp(input, "quit") != 0
 	 	&& strcmp(input, "exit") != 0)
 	{
-		char **args = malloc(sizeof(args[0]) * 1);
-		char **child_args = malloc(sizeof(child_args[0]) * 1);
-		size_t argSize = 0;
-		size_t childArgSize = 0;
-		buffer = strtok(input, " ");
-		command = buffer;
-		buffer = strtok(NULL, " ");
-		while(buffer != NULL){
-			args[argSize++] = buffer;
-			buffer = strtok(NULL, " ");
-			if(buffer != NULL)
-			{
-				if(strcmp(buffer, "||") == 0)
-				{
-					child_command = buffer = strtok(NULL, " ");
-					buffer = strtok(NULL, " ");
-					while(buffer != NULL)
-					{
-						child_args[childArgSize++] = buffer;
-						buffer = strtok(NULL, " ");
-						if(buffer != NULL)
-						{
-							child_args = realloc(child_args,
-								(childArgSize+1)*sizeof(child_args[0]));
-						}
-					}
-					break;
-				}
-				args = realloc(args, (argSize+1)*sizeof(args[0]));
-			}
+		pipe_found = find_pipe(input, command);
+		char **child1_args = malloc(1 * sizeof(child1_args[0]));
+		size_t arg1_size = 0;
+		command[0] = tokenize(command[0], child1_args, &arg1_size);
+		char **child2_args = malloc(1 * sizeof(child2_args[0]));
+		size_t arg2_size = 0;
+		if(pipe_found)
+		{
+			command[1] = tokenize(command[1], child2_args, &arg2_size);
 		}
-		pid_t child = fork();
-		if(child < 0)
-		{
-			fprintf(stderr, "Child failed to fork\n");
-		} else if(child > 0)
-		{
-			// Parent
-			// Test area
+		// Parent
 
-			printf("%s\n", command);
-			if(argSize > 0)
+		// Test area
+		printf("%s\n", command[0]);
+		printf("%d\n", (int)arg1_size);
+		if(arg1_size > 0)
+		{
+			for(size_t i = 0; i < arg1_size; i++)
 			{
-				for(size_t i = 0; i < argSize; i++)
-				{
-					printf("%s\n", args[i]);
-				}
+				printf("%s\n", child1_args[i]);
 			}
-			wait(0);
-			if(child_command != NULL)
-			{
-				child_command = NULL;
-			}
-			if(childArgSize > 0)
-			{
-				free(child_args);
-				childArgSize = 0;
-			}
-		} else {
-			if(child_command != NULL)
-			{
-				printf("%s\n", child_command);
-				child_command = NULL;
-			}
-			if(childArgSize > 0)
-			{
-				for(size_t i = 0; i < childArgSize; i++)
-				{
-					printf("%s\n", child_args[i]);
-				}
-				free(child_args);
-				childArgSize = 0;
-			}
-			exit(0);
+			free(child1_args);
+			arg1_size = 0;
 		}
+		if(pipe_found){
+			printf("%s\n", command[1]);
+			if(arg2_size > 0)
+			{
+				for(size_t i = 0; i < arg2_size; i++)
+				{
+					printf("%s\n", child2_args[i]);
+				}
+			}
+		}else{
+			printf("Pipe not found\n");
+		}
+		command[0] = NULL;
 		// Ask user for input
 		printf("480shell> ");
 		fgets(input, INPUT_SIZE, stdin);
@@ -118,16 +85,45 @@ int main() {
 }
 /////////////////////////////////  Functions  //////////////////////////////////
 /*******************************************************************************
-Function:
-Use:
-Arguments:
-Returns:
+Function:		bool find_pipe(char *input, char **output)
+Use:				Splits the input text on the "|" or "||" special character
+Arguments:	input  - string to parse
+						output - Array of two character pointer. First half of input is set
+						to output[0] and if there is a second half it is set to output[1]
+Returns:		Boolean value of true if a pipe was found and input was split
 *******************************************************************************/
-// void growArray(char *array, int size){
-// 	char *temp = new char[size];
-// 	for(unsigned i = 0; i < sizeof(array)/sizeof(array[0]); i++){
-// 		temp[i] = array[i];
-// 	}
-// 	delete [] array;
-// 	array = temp;
-// }
+bool find_pipe(char *input, char **output){
+	char *buffer = strtok(input, "|");
+	output[0] = buffer;
+	buffer = strtok(NULL, "|");
+	if(buffer != NULL)
+	{	// If there is a pipe save second command
+		if(buffer[0] == '|') // If double pipe, remove second pipe
+			buffer++;
+		output[1] = buffer;
+		return (true); // Return true, pipe found
+	}
+	return (false); // Return false, pipe not found
+}
+/*******************************************************************************
+Function:		char *tokenize(char *input, char **args, size_t *new_size)
+Use:				Used to tokenize a string on spaces to prepare for use with execvp()
+Arguments:	input    - string to tokenize
+						args     - array of character pointers to place arguments in
+						new_size - size of args array
+Returns:		The command to be used with execvp
+*******************************************************************************/
+char *tokenize(char *input, char **args, size_t *new_size){
+	char *buffer = strtok(input, " ");
+	char *command = buffer;
+	int size = (int) *new_size;
+	buffer = strtok(NULL, " ");
+	while(buffer != NULL)
+	{
+		args[size++] = buffer;
+		args = realloc(args, (size + 1) * sizeof(args[0]));
+		buffer = strtok(NULL, " ");
+	}
+	*new_size = (size_t) size;
+	return(command);
+}
