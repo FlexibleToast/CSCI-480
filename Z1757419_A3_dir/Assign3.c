@@ -139,13 +139,8 @@ void piped_command(char **args1, char **args2){
 		exit(-1);
 	}
 	pid_t child1 = fork();
-	pid_t child2 = fork();
 	if(child1 < 0){
 		fprintf(stderr, "Child 1 failed to fork\n");
-		exit(-1);
-	}
-	if(child2 < 0){
-		fprintf(stderr, "Child 2 failed to fork\n");
 		exit(-1);
 	}
 	if(child1 == 0)
@@ -161,18 +156,26 @@ void piped_command(char **args1, char **args2){
 		}
 		exit(0);
 	}
-	if(child2 == 0)
-	{	// Child 2 Process
-		close(READ);
-		dup(pipe_ends[READ]);
-		close(pipe_ends[WRITE]);
-		close(pipe_ends[READ]);
-		if(execvp(args2[0], args2) < 0)
-		{
-			fprintf(stderr, "Command failed to run with execvp\n");
+	if(child1 > 0)
+	{	// fork Child 2
+		pid_t child2 = fork();
+		if(child2 < 0){
+			fprintf(stderr, "Child 2 failed to fork\n");
 			exit(-1);
 		}
-		exit(0);
+		if(child2 == 0)
+		{	// Child 2 Process
+			close(READ);
+			dup(pipe_ends[READ]);
+			close(pipe_ends[WRITE]);
+			close(pipe_ends[READ]);
+			if(execvp(args2[0], args2) < 0)
+			{
+				fprintf(stderr, "Command failed to run with execvp\n");
+				exit(-1);
+			}
+			exit(0);
+		}
 	}
 	// Parent Process
 	close(pipe_ends[READ]);
