@@ -14,22 +14,24 @@
 #include <string.h>		// strtok
 #include <unistd.h>		// fork, pipe
 #include <wait.h>			// wait
-#include <stdlib.h>		// system
+#include <stdlib.h>		// malloc, realloc, free, exit
 
 // Prototyping statements
 bool find_pipe(char *input, char **output);
-char *tokenize(char *input, char **args, size_t *new_size);
+void tokenize(char *input, char **args);
+void single_command(char **args);
+void piped_command(char **args1, char **args2);
 
 // Set global constants
 #define INPUT_SIZE 256
-#define SPACE " "
+#define READ 0
+#define WRITE 1
 
 int main() {
 	// Create variables
-	char *buffer, *command[2];
+	char *command[2];
 	char input[INPUT_SIZE];
 	bool pipe_found = false;
-	pid_t child1, child2;
 	// Disable stdout buffer
 	setbuf(stdout, NULL);
 	// Ask user for input
@@ -41,41 +43,18 @@ int main() {
 	{
 		pipe_found = find_pipe(input, command);
 		char **child1_args = malloc(1 * sizeof(child1_args[0]));
-		size_t arg1_size = 0;
-		command[0] = tokenize(command[0], child1_args, &arg1_size);
-		char **child2_args = malloc(1 * sizeof(child2_args[0]));
-		size_t arg2_size = 0;
+		tokenize(command[0], child1_args);
 		if(pipe_found)
 		{
-			command[1] = tokenize(command[1], child2_args, &arg2_size);
+			char **child2_args = malloc(1 * sizeof(child2_args[0]));
+			tokenize(command[1], child2_args);
+			piped_command(child1_args, child2_args);
+			free(child2_args);
+		} else {
+			single_command(child1_args);
 		}
-		// Parent
-
-		// Test area
-		printf("%s\n", command[0]);
-		printf("%d\n", (int)arg1_size);
-		if(arg1_size > 0)
-		{
-			for(size_t i = 0; i < arg1_size; i++)
-			{
-				printf("%s\n", child1_args[i]);
-			}
-			free(child1_args);
-			arg1_size = 0;
-		}
-		if(pipe_found){
-			printf("%s\n", command[1]);
-			if(arg2_size > 0)
-			{
-				for(size_t i = 0; i < arg2_size; i++)
-				{
-					printf("%s\n", child2_args[i]);
-				}
-			}
-		}else{
-			printf("Pipe not found\n");
-		}
-		command[0] = NULL;
+		command[0] = command[1] = NULL;
+		free(child1_args);
 		// Ask user for input
 		printf("480shell> ");
 		fgets(input, INPUT_SIZE, stdin);
@@ -106,24 +85,99 @@ bool find_pipe(char *input, char **output){
 	return (false); // Return false, pipe not found
 }
 /*******************************************************************************
-Function:		char *tokenize(char *input, char **args, size_t *new_size)
+Function:		void tokenize(char *input, char **args, size_t *new_size)
 Use:				Used to tokenize a string on spaces to prepare for use with execvp()
 Arguments:	input    - string to tokenize
 						args     - array of character pointers to place arguments in
 						new_size - size of args array
-Returns:		The command to be used with execvp
+Returns:		void
 *******************************************************************************/
-char *tokenize(char *input, char **args, size_t *new_size){
-	char *buffer = strtok(input, " ");
-	char *command = buffer;
-	int size = (int) *new_size;
-	buffer = strtok(NULL, " ");
-	while(buffer != NULL)
+void tokenize(char *input, char **args){
+	int size = 0;
+	args[size] = strtok(input, " ");
+	while(args[size++] != NULL)
 	{
-		args[size++] = buffer;
 		args = realloc(args, (size + 1) * sizeof(args[0]));
-		buffer = strtok(NULL, " ");
+		args[size] = strtok(NULL, " ");
 	}
-	*new_size = (size_t) size;
-	return(command);
+	return;
+}
+/*******************************************************************************
+Function:
+Use:
+Arguments:
+Returns:
+*******************************************************************************/
+void single_command(char **args){
+	pid_t child = fork();
+	if(child < 0){
+		fprintf(stderr, "Process failed to fork\n");
+		exit(-1);
+	}
+	if(child == 0)
+	{	// Child Process
+		if(execvp(args[0], args) < 0)
+		{
+			fprintf(stderr, "Command failed to run with execvp\n");
+			exit(-1);
+		}
+		exit(0);
+	}
+	wait(0);
+	return;
+}
+/*******************************************************************************
+Function:
+Use:
+Arguments:
+Returns:
+*******************************************************************************/
+void piped_command(char **args1, char **args2){
+	int pipe_ends[2];
+	if(pipe(pipe_ends) < 0){
+		fprintf(stderr, "Failed to pipe\n");
+		exit(-1);
+	}
+	pid_t child1 = fork();
+	pid_t child2 = fork();
+	if(child1 < 0){
+		fprintf(stderr, "Child 1 failed to fork\n");
+		exit(-1);
+	}
+	if(child2 < 0){
+		fprintf(stderr, "Child 2 failed to fork\n");
+		exit(-1);
+	}
+	if(child1 == 0)
+	{	// Child 1 Process
+		close(WRITE);
+		dup(pipe_ends[WRITE]);
+		close(pipe_ends[READ]);
+		close(pipe_ends[WRITE]);
+		if(execvp(args1[0], args1) < 0)
+		{
+			fprintf(stderr, "Command failed to run with execvp\n");
+			exit(-1);
+		}
+		exit(0);
+	}
+	if(child2 == 0)
+	{	// Child 2 Process
+		close(READ);
+		dup(pipe_ends[READ]);
+		close(pipe_ends[WRITE]);
+		close(pipe_ends[READ]);
+		if(execvp(args2[0], args2) < 0)
+		{
+			fprintf(stderr, "Command failed to run with execvp\n");
+			exit(-1);
+		}
+		exit(0);
+	}
+	// Parent Process
+	close(pipe_ends[READ]);
+	close(pipe_ends[WRITE]);
+	wait(0);
+	wait(0);
+	return;
 }
