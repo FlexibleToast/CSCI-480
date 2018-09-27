@@ -34,28 +34,28 @@ int main() {
 	bool pipe_found = false;
 	// Disable stdout buffer
 	setbuf(stdout, NULL);
-	// Ask user for input
+	// Ask user for input / Prime the read
 	printf("480shell> ");
 	fgets(input, INPUT_SIZE, stdin);
 	input[strlen(input)-1] = 0;
 	while (strcmp(input, "q") != 0 && strcmp(input, "quit") != 0
 	 	&& strcmp(input, "exit") != 0)
-	{
-		pipe_found = find_pipe(input, command);
+	{	// Keep shell open until user asks to quit
+		pipe_found = find_pipe(input, command);	// Tokenize on pipe
 		char **child1_args = malloc(1 * sizeof(child1_args[0]));
-		tokenize(command[0], child1_args);
+		tokenize(command[0], child1_args);	// Extract 1st command
 		if(pipe_found)
-		{
+		{	// If a pipe is found, create appropriate array and send to functions
 			char **child2_args = malloc(1 * sizeof(child2_args[0]));
-			tokenize(command[1], child2_args);
-			piped_command(child1_args, child2_args);
+			tokenize(command[1], child2_args);	// Extract 2nd command
+			piped_command(child1_args, child2_args);	// Run commands
 			free(child2_args);
-		} else {
+		} else { // No pipe found, execute only one command
 			single_command(child1_args);
 		}
 		command[0] = command[1] = NULL;
 		free(child1_args);
-		// Ask user for input
+		// Ask user for new input
 		printf("480shell> ");
 		fgets(input, INPUT_SIZE, stdin);
 		input[strlen(input)-1] = 0;
@@ -90,36 +90,37 @@ Use:				Used to tokenize a string on spaces to prepare for use with execvp()
 Arguments:	input    - string to tokenize
 						args     - array of character pointers to place arguments in
 						new_size - size of args array
-Returns:		void
+Returns:		Nothing
 *******************************************************************************/
 void tokenize(char *input, char **args){
 	int size = 0;
 	args[size] = strtok(input, " ");
 	while(args[size++] != NULL)
-	{
+	{	// While not at end of string, continue tokenizing
 		args = realloc(args, (size + 1) * sizeof(args[0]));
 		args[size] = strtok(NULL, " ");
 	}
 	return;
 }
 /*******************************************************************************
-Function:
-Use:
-Arguments:
-Returns:
+Function:		void single_command(char **args)
+Use:				Used to execute a command by itself
+Arguments:	**args = A null terminated array of character pointers containing
+						         the command and arguments you want to run
+Returns:		Nothing
 *******************************************************************************/
 void single_command(char **args){
 	pid_t child = fork();
-	if(child < 0){
+	if(child < 0){	// Fork failed, print error
 		fprintf(stderr, "Process failed to fork\n");
-		exit(-1);
+		exit(127);
 	}
 	if(child == 0)
 	{	// Child Process
 		if(execvp(args[0], args) < 0)
-		{
-			fprintf(stderr, "Command failed to run with execvp\n");
-			exit(-1);
+		{	// execvp failed, print error
+			fprintf(stderr, "Command %s failed to run with execvp\n", args[0]);
+			exit(127);
 		}
 		exit(0);
 	}
@@ -127,21 +128,25 @@ void single_command(char **args){
 	return;
 }
 /*******************************************************************************
-Function:
-Use:
-Arguments:
-Returns:
+Function:		void piped_command(char **args1, char **args2)
+Use:				Used to create a pipe between two commands. Sets stdout of the first
+						command to the stdin of the second command
+Arguments:	**args1 = Null terminated array of character pointers containing
+						          the first command and arguments to run
+						**args2 = Null terminated array of character pointers containing
+						          the second command and arguments to run
+Returns:		Nothing
 *******************************************************************************/
 void piped_command(char **args1, char **args2){
 	int pipe_ends[2];
-	if(pipe(pipe_ends) < 0){
-		fprintf(stderr, "Failed to pipe\n");
-		exit(-1);
+	if(pipe(pipe_ends) < 0){	// Pipe failed, print error
+		fprintf(stderr, "Failed to open pipe\n");
+		exit(127);
 	}
 	pid_t child1 = fork();
-	if(child1 < 0){
+	if(child1 < 0){	// Child1 failed to fork, print error, exit
 		fprintf(stderr, "Child 1 failed to fork\n");
-		exit(-1);
+		exit(127);
 	}
 	if(child1 == 0)
 	{	// Child 1 Process
@@ -150,18 +155,18 @@ void piped_command(char **args1, char **args2){
 		close(pipe_ends[READ]);
 		close(pipe_ends[WRITE]);
 		if(execvp(args1[0], args1) < 0)
-		{
-			fprintf(stderr, "Command failed to run with execvp\n");
-			exit(-1);
+		{	// execvp failed, print error
+			fprintf(stderr, "Command %s failed to run with execvp\n", args1[0]);
+			exit(127);
 		}
 		exit(0);
 	}
 	if(child1 > 0)
-	{	// fork Child 2
+	{	// In parent, fork Child 2
 		pid_t child2 = fork();
-		if(child2 < 0){
+		if(child2 < 0){	// Child2 failed to fork, print error, exit
 			fprintf(stderr, "Child 2 failed to fork\n");
-			exit(-1);
+			exit(127);
 		}
 		if(child2 == 0)
 		{	// Child 2 Process
@@ -170,9 +175,9 @@ void piped_command(char **args1, char **args2){
 			close(pipe_ends[WRITE]);
 			close(pipe_ends[READ]);
 			if(execvp(args2[0], args2) < 0)
-			{
-				fprintf(stderr, "Command failed to run with execvp\n");
-				exit(-1);
+			{	// execvp failed, print error
+				fprintf(stderr, "Command %s failed to run with execvp\n", args2[0]);
+				exit(127);
 			}
 			exit(0);
 		}
