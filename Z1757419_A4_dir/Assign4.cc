@@ -8,12 +8,7 @@
    FUNCTION:		Simulate a single processor and dealing with multiprocessing.
 *******************************************************************************/
 
-#include <stdio.h>
-#include <stdbool.h>	// bool
-#include <string.h>		// strtok
-#include <unistd.h>		// fork, pipe
-#include <wait.h>			// wait
-#include <stdlib.h>		// malloc, realloc, free, exit
+#include <iostream>
 #include "Process.h"
 
 // Prototyping statements
