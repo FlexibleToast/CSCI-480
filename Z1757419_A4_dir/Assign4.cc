@@ -9,6 +9,7 @@
 *******************************************************************************/
 
 #include <iostream>
+#include <queue>
 #include "Process.h"
 
 // Prototyping statements
@@ -21,12 +22,23 @@
 #define HOW_OFTEN 25
 
 int main() {
-	event test;
-	printf("Operation: %c, value: %d\n", test.Operation, test.value);
-	test.Operation = 'C';
-	test.value = 50;
-	printf("%s\n", "Hello World");
-	printf("Operation: %c, value: %d\n", test.Operation, test.value);
+	priority_queue<Process> Q;
+	Process x, y, z;
+	x.setPriority((unsigned)20);
+	y.setPriority((unsigned)30);
+	z.setPriority((unsigned)1000);
+	if(x > y)
+		cout << "x is larger than y" << endl;
+	else
+		cout << "y is larger than x" << endl;
+	Q.push(x);
+	Q.push(y);
+	Q.push(z);
+	while(!Q.empty()){
+		Process I = Q.top();
+		cout << I.getPriority() << endl;
+		Q.pop();
+	}
   return 0;
 }
 /////////////////////////////////  Functions  //////////////////////////////////

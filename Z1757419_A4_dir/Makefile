@@ -13,11 +13,11 @@ Assign4: Assign4.o Process.o
 	g++ $(CCFLAGS) -o Assign4 Assign4.o Process.o
 
 # Rules to compile source code files to object code
-Assign4.o: Assign4.cpp Process.h
-	g++ $(CCFLAGS) -c Assign4.cpp
+Assign4.o: Assign4.cc Process.h
+	g++ $(CCFLAGS) -c Assign4.cc
 
-Process.o: Process.cpp Process.h
-	g++ $(CCFLAGS) -c Process.cpp
+Process.o: Process.cc Process.h
+	g++ $(CCFLAGS) -c Process.cc
 
 
 # Pseudo-target to remove object code and executable files
