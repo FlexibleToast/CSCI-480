@@ -13,7 +13,7 @@ Assign4: Assign4.o Process.o
 	g++ $(CCFLAGS) -o Assign4 Assign4.o Process.o
 
 # Rules to compile source code files to object code
-Assign4.o: Assign4.cc Process.h
+Assign4.o: Assign4.cc Assign4.h Process.h
 	g++ $(CCFLAGS) -c Assign4.cc
 
 Process.o: Process.cc Process.h

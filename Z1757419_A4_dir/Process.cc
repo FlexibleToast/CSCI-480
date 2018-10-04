@@ -19,36 +19,41 @@
  ******************************************************************************/
 Process::Process()
 {
-	string ProcessName = "NULL";
-	unsigned Priority = 0;
-	pid_t ProcessID = 0;
-	int ArrivalTime = 0;
-	event History[10];
-	int Sub = 0;
-	int CPUTimer = 0;
-	int IOTimer = 0;
-	int CPUTotal = 0;
-	int ITotal = 0;
-	int OTotal = 0;
-	int CPUCount = 0;
-	int ICount = 0;
-	int OCount = 0;
+	ProcessName = "NULL";
+	Priority = 0;
+	ProcessID = 0;
+	ArrivalTime = 0;
+	Sub = 0;
+	CPUTimer = 0;
+	IOTimer = 0;
+	CPUTotal = 0;
+	ITotal = 0;
+	OTotal = 0;
+	CPUCount = 0;
+	ICount = 0;
+	OCount = 0;
+	Timestamp = 0;
 }
 
-unsigned Process::getPriority() const{
-	return(Priority);
-}
-void Process::setPriority(unsigned newPriority){
+void Process::setPriority(int newPriority){
 	Priority = newPriority;
 }
-bool Process::operator>(const Process& rhs) const{
-	return(this->Priority > rhs.getPriority());
-}
-bool Process::operator<(const Process& rhs) const{
-	return(this->Priority < rhs.getPriority());
-}
 
+void Process::setTimestamp(int newTimestamp){
+	Timestamp = newTimestamp;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////Operator Overloads///////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+
+bool Process::operator>(const Process& rhs) const{
+	if(this->Priority == rhs.getPriority())
+		return(this->Timestamp < rhs.getTimestamp());
+	return(this->Priority > rhs.getPriority());
+}
+bool Process::operator<(const Process& rhs) const{
+	if(this->Priority == rhs.getPriority())
+		return(this->Timestamp > rhs.getTimestamp());
+	return(this->Priority < rhs.getPriority());
+}
