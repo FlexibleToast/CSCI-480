@@ -10,13 +10,14 @@
  ******************************************************************************/
 #include <iostream>
 #include <stdlib.h>
+#include <queue>
 
 using namespace std;
 
 struct event
 {
 	char Operation;
-	int value;
+	int Value;
 };
 
 class Process
@@ -27,10 +28,14 @@ class Process
 
     //Accessor Methods
 		//Get Methods
+		string getName() const { return(ProcessName); };
 		int getPriority() const { return(Priority); };
+		int getProcessID() const { return(ProcessID); };
+		int getArrivalTime() const { return(ArrivalTime); };
 		int getTimestamp() const { return(Timestamp); };
 
 		//Set Methods
+		void importQueue(queue<string>&, pid_t);
 		void setPriority(int);
 		void setTimestamp(int);
 
@@ -39,6 +44,7 @@ class Process
 		//Operator Overload
 		bool operator>(const Process&) const;
 		bool operator<(const Process&) const;
+		Process& operator=(const Process&);
 
   private:
 		string ProcessName;	// Process name

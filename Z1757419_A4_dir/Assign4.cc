@@ -12,20 +12,13 @@
 #include "Assign4.h"
 
 int main() {
-	priority_queue<Process> Q;
-	Process x, y, z;
-	x.setPriority(20);
-	y.setPriority(30);
-	z.setPriority(30);
-	z.setTimestamp(-3);
-	cout << z.getTimestamp() << endl;
-	Q.push(x);
-	Q.push(y);
-	Q.push(z);
-	while(!Q.empty()){
-		Process I = Q.top();
-		cout << I.getPriority() << " with wait time: " << I.getTimestamp() << endl;
-		Q.pop();
+	queue<Process> entry = buildEntryQueue();
+	Process X;
+	while(!entry.empty()){
+		X = entry.front();
+		entry.pop();
+		cout << "That was Process: " << X.getName() << " and Priority: "
+			<< X.getPriority() << " with ArrivalTime: " << X.getArrivalTime()	<< endl;
 	}
   return 0;
 }
@@ -36,3 +29,40 @@ Use:
 Arguments:
 Returns:
 *******************************************************************************/
+queue<Process> buildEntryQueue(){
+	queue<Process> entry;
+	ifstream inFile;
+	inFile.open("data4.txt");
+	if(inFile.fail())
+	{
+		cerr << "Input file data4.txt failed to open" << endl;
+		exit(-1);
+	}
+	string line;
+	char* tokens;
+	Process p;
+	pid_t PID = 100;
+	queue<string> inputQueue;
+	while(getline(inFile, line))
+	{	// Get first line of parameters for Process
+		tokens = strtok((char*)line.c_str(), " ");
+		if(strcmp(tokens, "STOPHERE") == 0)
+			break;
+		while(tokens)
+		{
+			inputQueue.push(string(tokens));
+			tokens = strtok(NULL, " ");
+		}
+		// Get second line of parameters for Process
+		getline(inFile, line);
+		tokens = strtok((char*)line.c_str(), " ");
+		while(tokens)
+		{
+			inputQueue.push(string(tokens));
+			tokens = strtok(NULL, " ");
+		}
+		p.importQueue(inputQueue, PID++);
+		entry.push(p);
+	}
+	return entry;
+}

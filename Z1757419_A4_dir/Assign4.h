@@ -10,8 +10,12 @@
  ******************************************************************************/
 #include <iostream>
 #include <queue>
+#include <string>
+#include <fstream>
+#include <string.h>
 
 // Prototyping statements
+queue<Process> buildEntryQueue();
 
 // Set global constants
 #define MAX_TIME 500
