@@ -101,6 +101,15 @@ int Process::iterateIOTimer(){
 	IOTimer++;
 	return(IOTimer);
 }
+/*******************************************************************************
+ * Method:		void Process::addQueuetime(int timer)
+ * Arguments:	timer - Current cycle
+ * Returns:		none
+ * Notes:			Adds time spent in a queue to TotalQueuetime
+ ******************************************************************************/
+void Process::addQueuetime(int timer){
+	TotalQueuetime += timer - Timestamp;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// Operator Overloads //////////////////////////////

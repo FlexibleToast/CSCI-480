@@ -12,26 +12,42 @@
 #include "Assign4.h"
 
 int main() {
+	// Initialize Ready Queue
+	{	// If the entry queue isn't empty, check if need to add to ready queue
+		while(entry.front().getArrivalTime() <= Timer && process_amount < AT_ONCE
+			&& !entry.empty())
+		{	// Add procs to ready if arrived and less than AT_ONCE
+			process_amount++;
+			Process x = entry.front();
+			x.setTimestamp(Timer);
+			cout << "Process " << x.getName()
+				<< " is moving to ready queue at timer: " << Timer << endl;
+			ready.push(x);
+			entry.pop();
+			if(!entry.empty())
+				x = entry.front();
+		}
+	}
 	while((Timer < MAX_TIME) && !(entry.empty() && ready.empty() && input.empty()
 		&& output.empty() && Active == nullptr && IActive == nullptr
 		&& OActive == nullptr))
-	{
-		// Initialize Ready Queue
-		if(!entry.empty())
-		{	// If the entry queue isn't empty, check if need to add to ready queue
-			while(entry.front().getArrivalTime() <= Timer && process_amount < AT_ONCE
-				&& !entry.empty())
-			{	// Add procs to ready if arrived and less than AT_ONCE
+	{	// While we haven't reached MAX_TIME and still processes to process
+		// Print status of simulation if at multiple of HOW_OFTEN
+		if(Timer > 0 && Timer % HOW_OFTEN == 0)
+			printStats();
+		if(!entry.empty() && process_amount < AT_ONCE)
+		{	// If the entry queue isn't empty and we can process more, check next proc
+			if(entry.front().getArrivalTime() <= Timer)
+			{	// If process has arrived, move to ready queue
 				process_amount++;
 				Process x = entry.front();
 				x.setTimestamp(Timer);
+				cout << endl << "Process " << x.getName()
+					<< " is moving to ready queue at timer: " << Timer << endl;
 				ready.push(x);
 				entry.pop();
-				if(!entry.empty())
-					x = entry.front();
 			}
 		}
-
 		// Activate processes from queues
 		if(Active == nullptr && !ready.empty())
 		{	// Get process from ready queue if no active process
@@ -40,7 +56,6 @@ int main() {
 			Active = new Process;
 			*Active = x;
 			Active->incrementCPUCount();
-			cout << Active->getName() << " is now active process" << endl;
 		} else if(Active == nullptr && ready.empty())
 		{	// No active and no ready processes, CPU is idle
 			cpu_idle++;
@@ -52,7 +67,6 @@ int main() {
 			IActive = new Process;
 			*IActive = x;
 			IActive->incrementICount();
-			cout << IActive->getName() << " is now input active process" << endl;
 		}
 		if(OActive == nullptr && !output.empty())
 		{	// Get process from output queue if no active process
@@ -61,7 +75,6 @@ int main() {
 			OActive = new Process;
 			*OActive = x;
 			OActive->incrementOCount();
-			cout << OActive->getName() << " is now output active process" << endl;
 		}
 
 		// Process the Active processes
@@ -70,6 +83,7 @@ int main() {
 			Active->incrementCPUTotal();
 			if(Active->iterateCPUTimer() == Active->getValue())
 			{
+				Active->addQueuetime(Timer);
 				Active->clearCPUTimer();
 				moveQueue(Active);
 				delete Active;
@@ -81,6 +95,7 @@ int main() {
 			IActive->incrementITotal();
 			if(IActive->iterateIOTimer() == IActive->getValue())
 			{
+				IActive->addQueuetime(Timer);
 				IActive->clearIOTimer();
 				moveQueue(IActive);
 				delete IActive;
@@ -92,6 +107,7 @@ int main() {
 			OActive->incrementOTotal();
 			if(OActive->iterateIOTimer() == OActive->getValue())
 			{
+				OActive->addQueuetime(Timer);
 				OActive->clearIOTimer();
 				moveQueue(OActive);
 				delete OActive;
@@ -102,44 +118,62 @@ int main() {
 		// Prepare next cycle
 		Timer++;
 	}
-	cout << "ready Queue contents:" << endl;
-	while(!ready.empty()){
-		Process X = ready.top();
-		ready.pop();
-		cout << "That was Process: " << X.getName() << " and Priority: "
-			<< X.getPriority() << " with ArrivalTime: " << X.getArrivalTime()	<< endl;
+	cout << "********************************************************************"
+		<< endl << "  Simulation Terminated" << endl << endl
+		<< "  Total cycles:" << Timer << endl
+		<< "  Total terminated processes:" << terminated_total << endl
+		<< "  Total CPU idle time:" << cpu_idle << endl << endl;
+	// Print left overs in queues
+	if(!entry.empty())
+	{	// Print leftovers from entry queue
+		cout << "Processes in the entry queue:" << endl;
+		while(!entry.empty()){
+			Process X = entry.front();
+			entry.pop();
+			cout << " " << X.getProcessID();
+		}
+		cout << endl;
 	}
-
-	// Print left overs
-	cout << "input Queue contents:" << endl;
-	while(!input.empty()){
-		Process X = input.top();
-		input.pop();
-		cout << "That was Process: " << X.getName() << " and Priority: "
-			<< X.getPriority() << " with ArrivalTime: " << X.getArrivalTime()	<< endl;
+	if(!ready.empty())
+	{	// Print leftovers from ready queue
+		cout << "Processes in the ready queue:" << endl;
+		while(!ready.empty()){
+			Process X = ready.top();
+			ready.pop();
+			cout << " " << X.getProcessID();
+		}
+		cout << endl;
 	}
-	cout << "output Queue contents:" << endl;
-	while(!output.empty()){
-		Process X = output.top();
-		output.pop();
-		cout << "That was Process: " << X.getName() << " and Priority: "
-			<< X.getPriority() << " with ArrivalTime: " << X.getArrivalTime()	<< endl;
+	if(!input.empty())
+	{	// Print leftovers from input queue
+		cout << "Processes in the input queue:" << endl;
+		while(!input.empty()){
+			Process X = input.top();
+			input.pop();
+			cout << " " << X.getProcessID();
+		}
+		cout << endl;
 	}
-	cout << "entry Queue contents:" << endl;
-	while(!entry.empty()){
-		Process X = entry.front();
-		entry.pop();
-		cout << "That was Process: " << X.getName() << " and Priority: "
-			<< X.getPriority() << " with ArrivalTime: " << X.getArrivalTime()	<< endl;
+	if(!output.empty())
+	{	// Print leftovers from output queue
+		cout << "Processes in the output queue:" << endl;
+		while(!output.empty()){
+			Process X = output.top();
+			output.pop();
+			cout << " " << X.getProcessID();
+		}
+		cout << endl;
 	}
-	cout << "terminated Queue contents:" << endl;
-	while(!terminated.empty()){
-		Process X = terminated.front();
-		terminated.pop();
-		cout << "That was Process: " << X.getName() << " and Priority: "
-			<< X.getPriority() << " with ArrivalTime: " << X.getArrivalTime()	<< endl;
+	if(!terminated.empty())
+	{	// Print leftovers from terminated queue
+		cout << "Processes that terminated:" << endl;
+		while(!terminated.empty()){
+			Process X = terminated.front();
+			terminated.pop();
+			cout << " " << X.getProcessID();
+		}
+		cout << endl;
 	}
-	cout << Timer << endl << "Time CPU spent idle: " << cpu_idle << endl;
   return 0;
 }
 /////////////////////////////////  Functions  //////////////////////////////////
@@ -193,10 +227,28 @@ Arguments:
 Returns:
 *******************************************************************************/
 void terminate_proc(){
-	cout << "Terminating " << Active->getName() << ", spent total of "
-		<< Active->getCPUTotal() << " cycles in CPU" << endl;
+	cout << endl
+		<< "** Terminating " << Active->getName() << " that had priority: "
+		<< Active->getPriority() << " **" << endl
+		<< setw(32) << left << "  Number of CPU bursts:"
+			<< setw(4) << right << Active->getCPUCount() << endl
+		<< setw(32) << left << "  Number of Input bursts:"
+			<< setw(4) << right << Active->getICount() << endl
+		<< setw(32) << left << "  Number of Output bursts:"
+			<< setw(4) << right << Active->getOCount() << endl
+		<< setw(32) << left << "  Time spent in CPU:"
+			<< setw(4) << right << Active->getCPUTotal() << endl
+		<< setw(32) << left << "  Time spent in Input:"
+			<< setw(4) << right << Active->getITotal() << endl
+		<< setw(32) << left << "  Time spent in Output:"
+			<< setw(4) << right << Active->getOTotal() << endl
+		<< setw(32) << left << "  Time spent waiting in queues:"
+			<< setw(4) << right << Active->getQueuetime() << endl
+		<< setw(32) << left << "  Current cycle: "
+			<< setw(4) << right << Timer << endl;;
 	terminated.push(*Active);
 	process_amount--;
+	terminated_total++;
 }
 /*******************************************************************************
 Function:
@@ -208,18 +260,85 @@ void moveQueue(Process *X)
 {
 	char nextEvent = X->getNextEvent();
 	if(nextEvent == 'I'){
-		cout << X->getName() << " is moving to input queue" << endl;
 		X->setTimestamp(Timer);
 		input.push(*X);
 	} else if(nextEvent == 'O'){
-		cout << X->getName() << " is moving to output queue" << endl;
 		X->setTimestamp(Timer);
 		output.push(*X);
 	} else if(nextEvent == 'C'){
-		cout << X->getName() << " is moving to ready queue" << endl;
 		X->setTimestamp(Timer);
 		ready.push(*X);
 	} else {
 		terminate_proc();
+	}
+}
+
+void printStats(){
+	queue<Process> temp_entry, temp_ready, temp_input, temp_output;
+	cout << endl
+		<< "***** Current Simlation Status as of Timer: "
+		<< setw(4) << right << Timer << " *****" << endl;
+	if(Active)
+			cout << Active->getName() << " is Active process with PID: "
+			<< Active->getProcessID() << endl;
+	if(IActive)
+		cout << IActive->getName() << " is IActive process with PID: "
+			<< IActive->getProcessID() << endl;
+	if(OActive)
+		cout << OActive->getName() << " is OActive process with PID: "
+			<< OActive->getProcessID() << endl;
+	if(!entry.empty())
+	{
+		cout << "Current processes in entry queue:";
+		while(!entry.empty())
+		{
+			Process X = entry.front();
+			cout << " " << X.getProcessID();
+			temp_entry.push(X);
+			entry.pop();
+		}
+		cout << endl;
+		// Rebuild entry queue
+		while(!temp_entry.empty())
+		{
+			entry.push(temp_entry.front());
+			temp_entry.pop();
+		}
+	}
+	if(!ready.empty())
+	{
+		cout << "Current processes in ready queue:";
+		while(!ready.empty())
+		{
+			Process X = ready.top();
+			cout << " " << X.getProcessID();
+			temp_ready.push(X);
+			ready.pop();
+		}
+		cout << endl;
+		// Rebuild ready queue
+		while(!temp_ready.empty())
+		{
+			ready.push(temp_ready.front());
+			temp_ready.pop();
+		}
+	}
+	if(!output.empty())
+	{
+		cout << "Current processes in output queue:";
+		while(!output.empty())
+		{
+			Process X = output.top();
+			cout << " " << X.getProcessID();
+			temp_output.push(X);
+			output.pop();
+		}
+		cout << endl;
+		// Rebuild output queue
+		while(!temp_output.empty())
+		{
+			output.push(temp_output.front());
+			temp_output.pop();
+		}
 	}
 }

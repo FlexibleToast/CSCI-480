@@ -35,7 +35,12 @@ class Process
 		int getValue() const { return(History[Sub].Value); };
 		int getCPUTotal() const { return(CPUTotal); };
 		int getCPUCount() const { return(CPUCount); };
+		int getITotal() const { return(ITotal); };
+		int getICount() const { return(ICount); };
+		int getOTotal() const { return(OTotal); };
+		int getOCount() const { return(OCount); };
 		char getNextEvent();
+		int getQueuetime() const { return(TotalQueuetime); };
 
 		//Set Methods
 		void importQueue(queue<string>&, pid_t);
@@ -51,6 +56,7 @@ class Process
 		void incrementOTotal() { OTotal++; };
 		void incrementCPUTotal(){ CPUTotal++; };
 		void incrementCPUCount() { CPUCount++; };
+		void addQueuetime(int);
 
     //Utility Methods
 
@@ -76,6 +82,7 @@ class Process
 		int ICount;					// Counts number of times needed Input burst
 		int OCount;					// Counts number of times needed Output burst
 		int Timestamp;			// Timestamp of TIMER when entered queue
+		int TotalQueuetime;	// Total time spent in a queue other than entry
 };
 
 #endif
