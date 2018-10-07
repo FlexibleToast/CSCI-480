@@ -16,6 +16,8 @@
 
 // Prototyping statements
 queue<Process> buildEntryQueue();
+void terminate_proc();
+void moveQueue(Process*);
 
 // Set global constants
 #define MAX_TIME 500
@@ -24,7 +26,10 @@ queue<Process> buildEntryQueue();
 #define ARRAY_SIZE 10
 #define HOW_OFTEN 25
 
-int Timer = 0, process_amount = 0;
+int Timer = 0, process_amount = 0, cpu_idle = 0;
 Process *IActive = nullptr, *OActive = nullptr, *Active = nullptr;
+// Create Queues
+queue<Process> terminated, entry = buildEntryQueue();
+priority_queue<Process> ready, input, output;
 
 #endif

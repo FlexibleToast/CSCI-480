@@ -33,11 +33,21 @@ class Process
 		int getProcessID() const { return(ProcessID); };
 		int getArrivalTime() const { return(ArrivalTime); };
 		int getTimestamp() const { return(Timestamp); };
+		int getValue() const { return(History[Sub].Value); };
+		int getCPUTotal() const { return(CPUTotal); };
+		int getCPUCount() const { return(CPUCount); };
+		char getNextEvent();
 
 		//Set Methods
 		void importQueue(queue<string>&, pid_t);
-		void setPriority(int);
-		void setTimestamp(int);
+		void setTimestamp(int newTimestamp){ Timestamp = newTimestamp; };
+		int  iterateCPUTimer();
+		void clearCPUTimer();
+		int  iterateIOTimer();
+		void clearIOTimer();
+		void incrementSub(){ Sub++; };
+		void incrementCPUTotal(){ CPUTotal++; };
+		void incrementCPUCount() { CPUCount++; };
 
     //Utility Methods
 

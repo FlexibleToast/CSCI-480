@@ -12,37 +12,88 @@
 #include "Assign4.h"
 
 int main() {
-	// Create Queues
-	queue<Process> entry = buildEntryQueue();
-	priority_queue<Process> ready, input, output;
-	Process X;
-
 	while((Timer < MAX_TIME) || (entry.empty() && ready.empty() && input.empty()
 		&& output.empty() && Active == nullptr && IActive == nullptr
 		&& OActive == nullptr))
 	{
 		// Initialize Ready Queue
 		if(!entry.empty())
-			X = entry.front();
-		while(X.getArrivalTime() <= Timer && process_amount < AT_ONCE)
-		{
-			process_amount++;
-			X.setTimestamp(Timer);
-			ready.push(X);
-			entry.pop();
-			X = entry.front();
+		{	// If the entry queue isn't empty, check if need to add to ready queue
+			while(entry.front().getArrivalTime() <= Timer && process_amount < AT_ONCE
+				&& !entry.empty())
+			{	// Add procs to ready if arrived and less than AT_ONCE
+				process_amount++;
+				Process x = entry.front();
+				x.setTimestamp(Timer);
+				ready.push(x);
+				entry.pop();
+				if(!entry.empty())
+					x = entry.front();
+			}
 		}
+		// Active process management
+		if(Active == nullptr && !ready.empty())
+		{	// Get process from ready queue if no active process
+			Process x = ready.top();
+			ready.pop();
+			Active = new Process;
+			*Active = x;
+			Active->incrementCPUCount();
+		} else if(Active == nullptr && ready.empty())
+		{	// No active and no ready processes, CPU is idle
+			cpu_idle++;
+		}
+		if(Active)
+		{
+			Active->incrementCPUTotal();
+			if(Active->iterateCPUTimer() == Active->getValue())
+			{
+				moveQueue(Active);
+				delete Active;
+				Active = nullptr;
+			}
+		}
+
+		// Prepare next cycle
+		cout << Timer << endl;
+		if(Active)
+			cout << Active->getName() << endl;
 		Timer++;
 	}
+	cout << "ready Queue contents:" << endl;
 	while(!ready.empty()){
-		X = ready.top();
+		Process X = ready.top();
 		ready.pop();
 		cout << "That was Process: " << X.getName() << " and Priority: "
 			<< X.getPriority() << " with ArrivalTime: " << X.getArrivalTime()	<< endl;
 	}
+
+	// Print left overs
+	cout << "input Queue contents:" << endl;
+	while(!input.empty()){
+		Process X = input.top();
+		input.pop();
+		cout << "That was Process: " << X.getName() << " and Priority: "
+			<< X.getPriority() << " with ArrivalTime: " << X.getArrivalTime()	<< endl;
+	}
+	cout << "output Queue contents:" << endl;
+	while(!output.empty()){
+		Process X = output.top();
+		output.pop();
+		cout << "That was Process: " << X.getName() << " and Priority: "
+			<< X.getPriority() << " with ArrivalTime: " << X.getArrivalTime()	<< endl;
+	}
+	cout << "entry Queue contents:" << endl;
 	while(!entry.empty()){
-		X = entry.front();
+		Process X = entry.front();
 		entry.pop();
+		cout << "That was Process: " << X.getName() << " and Priority: "
+			<< X.getPriority() << " with ArrivalTime: " << X.getArrivalTime()	<< endl;
+	}
+	cout << "terminated Queue contents:" << endl;
+	while(!terminated.empty()){
+		Process X = terminated.front();
+		terminated.pop();
 		cout << "That was Process: " << X.getName() << " and Priority: "
 			<< X.getPriority() << " with ArrivalTime: " << X.getArrivalTime()	<< endl;
 	}
@@ -92,4 +143,35 @@ queue<Process> buildEntryQueue(){
 		entry.push(p);
 	}
 	return entry;
+}
+/*******************************************************************************
+Function:
+Use:
+Arguments:
+Returns:
+*******************************************************************************/
+void terminate_proc(){
+	cout << "Terminating " << Active->getName() << ", spent total of "
+		<< Active->getCPUTotal() << " cycles in CPU" << endl;
+	terminated.push(*Active);
+	process_amount--;
+}
+/*******************************************************************************
+Function:
+Use:
+Arguments:
+Returns:
+*******************************************************************************/
+void moveQueue(Process *X)
+{
+	char nextEvent = X->getNextEvent();
+	if(nextEvent == 'I'){
+		input.push(*X);
+	} else if(nextEvent == 'O'){
+		output.push(*X);
+	} else if(nextEvent == 'C'){
+		ready.push(*X);
+	} else {
+		terminate_proc();
+	}
 }

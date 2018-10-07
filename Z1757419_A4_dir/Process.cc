@@ -36,8 +36,31 @@ Process::Process()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////// Accessor Methods ///////////////////////////////
+////////////////////////////////// Get Methods /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+/*******************************************************************************
+ * Method:
+ * Arguments:
+ *
+ * Returns:
+ * Notes:
+ ******************************************************************************/
+ char Process::getNextEvent(){
+	 Sub++;
+	 return(History[Sub].Operation);
+ }
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////// Set Methods /////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+/*******************************************************************************
+ * Method:		void Process::importQueue(queue<string> &inputQueue, pid_t newPID)
+ * Arguments: &inputQueue - A queue of strings read from a file that contains
+ *													values for the initialization of the process
+ *						newPID - The PID of the new process
+ * Returns:   none
+ * Notes:     Changes a process to have values passed as a queue
+ ******************************************************************************/
 void Process::importQueue(queue<string> &inputQueue, pid_t newPID){
 	ProcessID = newPID;
 	ProcessName = inputQueue.front();
@@ -58,14 +81,16 @@ void Process::importQueue(queue<string> &inputQueue, pid_t newPID){
 		inputQueue.pop();
 	}
 }
-
-void Process::setPriority(int newPriority){
-	Priority = newPriority;
-}
-
-void Process::setTimestamp(int newTimestamp){
-	Timestamp = newTimestamp;
-}
+/*******************************************************************************
+ * Method:		int Process::iterateCPUTimer()
+ * Arguments: none
+ * Returns:   Current number of CPU cycles
+ * Notes:			Used to iterate the time in CPU and compare to cycles needed
+ ******************************************************************************/
+ int Process::iterateCPUTimer(){
+	 CPUTimer++;
+	 return(CPUTimer);
+ }
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// Operator Overloads //////////////////////////////
@@ -97,9 +122,6 @@ Process& Process::operator=(const Process& alpha)
 	this->ICount = alpha.ICount;
 	this->OCount = alpha.OCount;
 	this->Timestamp = alpha.Timestamp;
-	// // Remove old History and create new
-	// delete [] this->History;
-	// this->History = new event[10];
 	// Copy all elements of History
 	for(int i = 0; i < 10; i++)
 	{	this->History[i] = alpha.History[i]; }
