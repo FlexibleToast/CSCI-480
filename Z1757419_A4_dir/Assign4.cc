@@ -12,7 +12,7 @@
 #include "Assign4.h"
 
 int main() {
-	while((Timer < MAX_TIME) || (entry.empty() && ready.empty() && input.empty()
+	while((Timer < MAX_TIME) && !(entry.empty() && ready.empty() && input.empty()
 		&& output.empty() && Active == nullptr && IActive == nullptr
 		&& OActive == nullptr))
 	{
@@ -31,7 +31,8 @@ int main() {
 					x = entry.front();
 			}
 		}
-		// Active process management
+
+		// Activate processes from queues
 		if(Active == nullptr && !ready.empty())
 		{	// Get process from ready queue if no active process
 			Process x = ready.top();
@@ -39,25 +40,66 @@ int main() {
 			Active = new Process;
 			*Active = x;
 			Active->incrementCPUCount();
+			cout << Active->getName() << " is now active process" << endl;
 		} else if(Active == nullptr && ready.empty())
 		{	// No active and no ready processes, CPU is idle
 			cpu_idle++;
 		}
+		if(IActive == nullptr && !input.empty())
+		{	// Get process from input queue if no active process
+			Process x = input.top();
+			input.pop();
+			IActive = new Process;
+			*IActive = x;
+			IActive->incrementICount();
+			cout << IActive->getName() << " is now input active process" << endl;
+		}
+		if(OActive == nullptr && !output.empty())
+		{	// Get process from output queue if no active process
+			Process x = output.top();
+			output.pop();
+			OActive = new Process;
+			*OActive = x;
+			OActive->incrementOCount();
+			cout << OActive->getName() << " is now output active process" << endl;
+		}
+
+		// Process the Active processes
 		if(Active)
 		{
 			Active->incrementCPUTotal();
 			if(Active->iterateCPUTimer() == Active->getValue())
 			{
+				Active->clearCPUTimer();
 				moveQueue(Active);
 				delete Active;
 				Active = nullptr;
 			}
 		}
+		if(IActive)
+		{
+			IActive->incrementITotal();
+			if(IActive->iterateIOTimer() == IActive->getValue())
+			{
+				IActive->clearIOTimer();
+				moveQueue(IActive);
+				delete IActive;
+				IActive = nullptr;
+			}
+		}
+		if(OActive)
+		{
+			OActive->incrementOTotal();
+			if(OActive->iterateIOTimer() == OActive->getValue())
+			{
+				OActive->clearIOTimer();
+				moveQueue(OActive);
+				delete OActive;
+				OActive = nullptr;
+			}
+		}
 
 		// Prepare next cycle
-		cout << Timer << endl;
-		if(Active)
-			cout << Active->getName() << endl;
 		Timer++;
 	}
 	cout << "ready Queue contents:" << endl;
@@ -97,7 +139,7 @@ int main() {
 		cout << "That was Process: " << X.getName() << " and Priority: "
 			<< X.getPriority() << " with ArrivalTime: " << X.getArrivalTime()	<< endl;
 	}
-	cout << Timer << endl;
+	cout << Timer << endl << "Time CPU spent idle: " << cpu_idle << endl;
   return 0;
 }
 /////////////////////////////////  Functions  //////////////////////////////////
@@ -166,10 +208,16 @@ void moveQueue(Process *X)
 {
 	char nextEvent = X->getNextEvent();
 	if(nextEvent == 'I'){
+		cout << X->getName() << " is moving to input queue" << endl;
+		X->setTimestamp(Timer);
 		input.push(*X);
 	} else if(nextEvent == 'O'){
+		cout << X->getName() << " is moving to output queue" << endl;
+		X->setTimestamp(Timer);
 		output.push(*X);
 	} else if(nextEvent == 'C'){
+		cout << X->getName() << " is moving to ready queue" << endl;
+		X->setTimestamp(Timer);
 		ready.push(*X);
 	} else {
 		terminate_proc();

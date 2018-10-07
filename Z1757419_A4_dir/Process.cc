@@ -45,10 +45,10 @@ Process::Process()
  * Returns:
  * Notes:
  ******************************************************************************/
- char Process::getNextEvent(){
-	 Sub++;
-	 return(History[Sub].Operation);
- }
+char Process::getNextEvent(){
+	Sub++;
+	return(History[Sub].Operation);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// Set Methods /////////////////////////////////
@@ -87,25 +87,52 @@ void Process::importQueue(queue<string> &inputQueue, pid_t newPID){
  * Returns:   Current number of CPU cycles
  * Notes:			Used to iterate the time in CPU and compare to cycles needed
  ******************************************************************************/
- int Process::iterateCPUTimer(){
-	 CPUTimer++;
-	 return(CPUTimer);
- }
+int Process::iterateCPUTimer(){
+	CPUTimer++;
+	return(CPUTimer);
+}
+/*******************************************************************************
+ * Method:		int Process::iterateIOTimer()
+ * Arguments:	none
+ * Returns:		Current number of IO cycles
+ * Notes:			Used to iterate the time in IO and compare to cycles needed
+ ******************************************************************************/
+int Process::iterateIOTimer(){
+	IOTimer++;
+	return(IOTimer);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// Operator Overloads //////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-
+/*******************************************************************************
+ * Method:		bool Process::operator>(const Process& rhs) const
+ * Arguments:
+ * Returns:
+ * Notes:
+ ******************************************************************************/
 bool Process::operator>(const Process& rhs) const{
 	if(this->Priority == rhs.Priority)
 		return(this->Timestamp < rhs.Timestamp);
 	return(this->Priority > rhs.Priority);
 }
+/*******************************************************************************
+ * Method:		bool Process::operator<(const Process& rhs) const
+ * Arguments:
+ * Returns:
+ * Notes:
+ ******************************************************************************/
 bool Process::operator<(const Process& rhs) const{
 	if(this->Priority == rhs.Priority)
 		return(this->Timestamp > rhs.Timestamp);
 	return(this->Priority < rhs.Priority);
 }
+/*******************************************************************************
+ * Method:		Process& Process::operator=(const Process& alpha)
+ * Arguments:
+ * Returns:
+ * Notes:
+ ******************************************************************************/
 Process& Process::operator=(const Process& alpha)
 {
 	this->ProcessName = alpha.ProcessName;

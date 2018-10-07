@@ -24,7 +24,6 @@ class Process
 {
   public:
     Process();
-    //~Process();
 
     //Accessor Methods
 		//Get Methods
@@ -42,10 +41,14 @@ class Process
 		void importQueue(queue<string>&, pid_t);
 		void setTimestamp(int newTimestamp){ Timestamp = newTimestamp; };
 		int  iterateCPUTimer();
-		void clearCPUTimer();
+		void clearCPUTimer() { CPUTimer = 0; };
 		int  iterateIOTimer();
-		void clearIOTimer();
+		void clearIOTimer() { IOTimer = 0; };
 		void incrementSub(){ Sub++; };
+		void incrementICount() { ICount++; };
+		void incrementITotal() { ITotal++; };
+		void incrementOCount() { OCount++; };
+		void incrementOTotal() { OTotal++; };
 		void incrementCPUTotal(){ CPUTotal++; };
 		void incrementCPUCount() { CPUCount++; };
 
