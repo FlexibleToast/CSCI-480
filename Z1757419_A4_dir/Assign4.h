@@ -24,6 +24,7 @@ queue<Process> buildEntryQueue();
 #define ARRAY_SIZE 10
 #define HOW_OFTEN 25
 
-int Timer = 0;
+int Timer = 0, process_amount = 0;
+Process *IActive = nullptr, *OActive = nullptr, *Active = nullptr;
 
 #endif

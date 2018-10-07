@@ -12,14 +12,41 @@
 #include "Assign4.h"
 
 int main() {
+	// Create Queues
 	queue<Process> entry = buildEntryQueue();
+	priority_queue<Process> ready, input, output;
 	Process X;
+
+	while((Timer < MAX_TIME) || (entry.empty() && ready.empty() && input.empty()
+		&& output.empty() && Active == nullptr && IActive == nullptr
+		&& OActive == nullptr))
+	{
+		// Initialize Ready Queue
+		if(!entry.empty())
+			X = entry.front();
+		while(X.getArrivalTime() <= Timer && process_amount < AT_ONCE)
+		{
+			process_amount++;
+			X.setTimestamp(Timer);
+			ready.push(X);
+			entry.pop();
+			X = entry.front();
+		}
+		Timer++;
+	}
+	while(!ready.empty()){
+		X = ready.top();
+		ready.pop();
+		cout << "That was Process: " << X.getName() << " and Priority: "
+			<< X.getPriority() << " with ArrivalTime: " << X.getArrivalTime()	<< endl;
+	}
 	while(!entry.empty()){
 		X = entry.front();
 		entry.pop();
 		cout << "That was Process: " << X.getName() << " and Priority: "
 			<< X.getPriority() << " with ArrivalTime: " << X.getArrivalTime()	<< endl;
 	}
+	cout << Timer << endl;
   return 0;
 }
 /////////////////////////////////  Functions  //////////////////////////////////
