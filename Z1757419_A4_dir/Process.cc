@@ -39,11 +39,11 @@ Process::Process()
 ////////////////////////////////// Get Methods /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 /*******************************************************************************
- * Method:
- * Arguments:
- *
- * Returns:
- * Notes:
+ * Method:		char Process::getNextEvent()
+ * Arguments:	none
+ * Returns:		char indicating which operation to perform next
+ * Notes:			Called when an operation is complete to move to next item in
+ *						History array and returns the operation found
  ******************************************************************************/
 char Process::getNextEvent(){
 	Sub++;
@@ -70,7 +70,7 @@ void Process::importQueue(queue<string> &inputQueue, pid_t newPID){
 	ArrivalTime = stoi(inputQueue.front());
 	inputQueue.pop();
 	for(int i = 0; i < 10; i++)
-	{
+	{	// Place operations in History array
 		History[i].Operation = inputQueue.front().c_str()[0];
 		inputQueue.pop();
 		History[i].Value = stoi(inputQueue.front());
@@ -116,9 +116,9 @@ void Process::addQueuetime(int timer){
 ////////////////////////////////////////////////////////////////////////////////
 /*******************************************************************************
  * Method:		bool Process::operator>(const Process& rhs) const
- * Arguments:
- * Returns:
- * Notes:
+ * Arguments:	&rhs - address of Process to compare against
+ * Returns:		bool result of comparison
+ * Notes:			Used by priority queue to insert items in proper order
  ******************************************************************************/
 bool Process::operator>(const Process& rhs) const{
 	if(this->Priority == rhs.Priority)
@@ -127,9 +127,9 @@ bool Process::operator>(const Process& rhs) const{
 }
 /*******************************************************************************
  * Method:		bool Process::operator<(const Process& rhs) const
- * Arguments:
- * Returns:
- * Notes:
+ * Arguments:	&rhs - address of Process to compare against
+ * Returns:		bool result of comparison
+ * Notes:			Used by priority queue to insert items in proper order
  ******************************************************************************/
 bool Process::operator<(const Process& rhs) const{
 	if(this->Priority == rhs.Priority)
@@ -138,9 +138,9 @@ bool Process::operator<(const Process& rhs) const{
 }
 /*******************************************************************************
  * Method:		Process& Process::operator=(const Process& alpha)
- * Arguments:
- * Returns:
- * Notes:
+ * Arguments:	&alpha - Process to copy
+ * Returns:		Process with contents copied from alpha
+ * Notes:			Used to set one Process to the same values as another
  ******************************************************************************/
 Process& Process::operator=(const Process& alpha)
 {
