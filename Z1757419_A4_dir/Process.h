@@ -27,35 +27,35 @@ class Process
 
     //Accessor Methods
 		//Get Methods
-		string getName() const { return(ProcessName); };
-		int getPriority() const { return(Priority); };
-		int getProcessID() const { return(ProcessID); };
-		int getArrivalTime() const { return(ArrivalTime); };
-		int getTimestamp() const { return(Timestamp); };
-		int getValue() const { return(History[Sub].Value); };
-		int getCPUTotal() const { return(CPUTotal); };
-		int getCPUCount() const { return(CPUCount); };
-		int getITotal() const { return(ITotal); };
-		int getICount() const { return(ICount); };
-		int getOTotal() const { return(OTotal); };
-		int getOCount() const { return(OCount); };
+		inline string getName() const { return(ProcessName); };
+		inline int getPriority() const { return(Priority); };
+		inline int getProcessID() const { return(ProcessID); };
+		inline int getArrivalTime() const { return(ArrivalTime); };
+		inline int getTimestamp() const { return(Timestamp); };
+		inline int getValue() const { return(History[Sub].Value); };
+		inline int getCPUTotal() const { return(CPUTotal); };
+		inline int getCPUCount() const { return(CPUCount); };
+		inline int getITotal() const { return(ITotal); };
+		inline int getICount() const { return(ICount); };
+		inline int getOTotal() const { return(OTotal); };
+		inline int getOCount() const { return(OCount); };
 		char getNextEvent();
-		int getQueuetime() const { return(TotalQueuetime); };
+		inline int getQueuetime() const { return(TotalQueuetime); };
 
 		//Set Methods
 		void importQueue(queue<string>&, pid_t);
 		void setTimestamp(int newTimestamp){ Timestamp = newTimestamp; };
 		int  iterateCPUTimer();
-		void clearCPUTimer() { CPUTimer = 0; };
+		inline void clearCPUTimer() { CPUTimer = 0; };
 		int  iterateIOTimer();
-		void clearIOTimer() { IOTimer = 0; };
-		void incrementSub(){ Sub++; };
-		void incrementICount() { ICount++; };
-		void incrementITotal() { ITotal++; };
-		void incrementOCount() { OCount++; };
-		void incrementOTotal() { OTotal++; };
-		void incrementCPUTotal(){ CPUTotal++; };
-		void incrementCPUCount() { CPUCount++; };
+		inline void clearIOTimer() { IOTimer = 0; };
+		inline void incrementSub(){ Sub++; };
+		inline void incrementICount() { ICount++; };
+		inline void incrementITotal() { ITotal++; };
+		inline void incrementOCount() { OCount++; };
+		inline void incrementOTotal() { OTotal++; };
+		inline void incrementCPUTotal(){ CPUTotal++; };
+		inline void incrementCPUCount() { CPUCount++; };
 		void addQueuetime(int);
 
     //Utility Methods
