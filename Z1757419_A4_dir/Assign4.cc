@@ -13,9 +13,9 @@
 
 int main() {
 	// Initialize Ready Queue
+	if(!entry.empty())
 	{	// If the entry queue isn't empty, check if need to add to ready queue
-		while(entry.front().getArrivalTime() <= Timer && process_amount < AT_ONCE
-			&& !entry.empty())
+		while(entry.front().getArrivalTime() <= Timer && process_amount < AT_ONCE)
 		{	// Add procs to ready if arrived and less than AT_ONCE
 			process_amount++;
 			Process x = entry.front();
@@ -30,7 +30,7 @@ int main() {
 	}
 	while((Timer < MAX_TIME) && process_amount > 0)
 	{	// While we haven't reached MAX_TIME and still processes to process
-		if(Timer > 0 && Timer % HOW_OFTEN == 0)
+		if(Timer % HOW_OFTEN == 0)
 			printStats(); // Print status of simulation if at multiple of HOW_OFTEN
 		if(!entry.empty() && process_amount < AT_ONCE)
 		{	// If the entry queue isn't empty and we can process more, check next proc
