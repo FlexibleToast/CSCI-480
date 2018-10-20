@@ -12,9 +12,11 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <unistd.h>
 
 // Prototyping statements
-void* test_run();
+void* insert_run(void* tID);
+void* remove_run(void* tID);
 
 // Set global constants
 #define P_NUMBER 6
@@ -25,8 +27,9 @@ void* test_run();
 
 // Create buffer
 size_t widgets;
-// Create semaphores
+// Create semaphores and mutex
 sem_t not_full, not_empty;
+pthread_mutex_t counter_lock;
 
 int main() {
 	// Create pthreads
@@ -35,19 +38,42 @@ int main() {
 	// Create buffer
 	size_t widgets;
 	// Create thread IDs
-	size_t tID[P_NUMBER + C_NUMBER];
-	for(size_t i = 1; i <= (P_NUMBER+C_NUMBER); i++)
-	{
+	size_t id_size;
+	if(P_NUMBER > C_NUMBER)
+	{ // If more producers, create producer number of IDs
+		id_size = P_NUMBER;
+	} else { // Else use consumer numer of IDs
+		id_size = C_NUMBER;
+	}
+	size_t tID[id_size];
+	for(size_t i = 1; i <= (id_size); i++)
+	{	// Initialize the IDs
 		tID[i-1] = i;
 	}
 	// Initialize semaphores
 	sem_init(&not_full, 0, (unsigned)BUFFER_SIZE);
 	sem_init(&not_empty, 0, (unsigned)0);
 
-	pthread_create(&producers[0], NULL, test_run, (void*) &tID[0]);
-	pthread_join(producers[0], NULL);
+	for(int i = 0; i < P_NUMBER; i++)
+	{
+		pthread_create(&producers[i], NULL, insert_run, (void*) &tID[i]);
+	}
+	for(int i = 0; i < C_NUMBER; i++)
+	{
+		pthread_create(&consumers[i], NULL, remove_run, (void*) &tID[i]);
+	}
+	for(int i = 0; i < P_NUMBER; i++)
+	{
+		pthread_join(producers[i], NULL);
+	}
+	for(int i = 0; i < C_NUMBER; i++)
+	{
+		pthread_join(consumers[i], NULL);
+	}
+	// Remove semaphores and mutex
 	sem_destroy(&not_full);
 	sem_destroy(&not_empty);
+	pthread_mutex_destroy(&counter_lock);
 
   return 0;
 }
@@ -58,14 +84,40 @@ Use:
 Arguments:
 Returns:
 *******************************************************************************/
-void* test_run(void* tID){
+void* insert_run(void* tID){
 	int *ID = (void*) tID;
-	printf("Hello World, this is thread: %d\n", *ID);
-	for(int i = 0; i < 10; i++)
+	for(int i = 0; i < N_P_STEPS; i++)
 	{
 		sem_wait(&not_full);
+		pthread_mutex_lock(&counter_lock);
 		widgets++;
+		printf("Producer %d inserted a widget. Total is now %d\n", *ID,
+			(int)widgets);
 		sem_post(&not_empty);
+		pthread_mutex_unlock(&counter_lock);
+		sleep(1);
+	}
+	return NULL;
+}
+/////////////////////////////////  Functions  //////////////////////////////////
+/*******************************************************************************
+Function:
+Use:
+Arguments:
+Returns:
+*******************************************************************************/
+void* remove_run(void* tID){
+	int *ID = (void*) tID;
+	for(int i = 0; i < N_C_STEPS; i++)
+	{
+		sem_wait(&not_empty);
+		pthread_mutex_lock(&counter_lock);
+		widgets--;
+		printf("Consumer %d removed a widget. Total is now %d\n", *ID,
+			(int)widgets);
+		sem_post(&not_full);
+		pthread_mutex_unlock(&counter_lock);
+		sleep(1);
 	}
 	return NULL;
 }
