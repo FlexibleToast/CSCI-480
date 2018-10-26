@@ -16,8 +16,10 @@
 #include <stdlib.h>
 
 // Prototyping statements
-void* insert_run(void* tID);
-void* remove_run(void* tID);
+void* produce_run(void* tID);
+void* consume_run(void* tID);
+void insert_widget(int);
+void remove_widget(int);
 
 // Set global constants
 #define P_NUMBER 6
@@ -27,7 +29,7 @@ void* remove_run(void* tID);
 #define N_C_STEPS 6
 
 // Create buffer
-size_t widgets;
+size_t widgets = 0;
 // Create semaphores and mutex
 sem_t not_full, not_empty;
 pthread_mutex_t counter_lock;
@@ -36,8 +38,6 @@ int main() {
 	// Create pthreads
 	pthread_t	producers[P_NUMBER];
 	pthread_t consumers[C_NUMBER];
-	// Create buffer
-	size_t widgets;
 	// Create thread IDs
 	size_t id_size;
 	if(P_NUMBER > C_NUMBER)
@@ -64,7 +64,7 @@ int main() {
 	}
 	for(int i = 0; i < P_NUMBER; i++)
 	{	// Create all producer threads
-		if(pthread_create(&producers[i], NULL, insert_run, (void*) &tID[i]))
+		if(pthread_create(&producers[i], NULL, produce_run, (void*) &tID[i]))
 		{	// If failed, print error
 			fprintf(stderr, "Failed to create producer thread with ID: %d\n", i);
 			exit(-1);
@@ -72,7 +72,7 @@ int main() {
 	}
 	for(int i = 0; i < C_NUMBER; i++)
 	{	// Create all consumer threads
-		if(pthread_create(&consumers[i], NULL, remove_run, (void*) &tID[i]))
+		if(pthread_create(&consumers[i], NULL, consume_run, (void*) &tID[i]))
 		{	// If failed, print error
 			fprintf(stderr, "Failed to create consumer thread with ID: %d\n", i);
 			exit(-1);
@@ -115,77 +115,94 @@ int main() {
 }
 /////////////////////////////////  Functions  //////////////////////////////////
 /*******************************************************************************
-Function:		void* insert_run(void* tID)
+Function:		void* produce_run(void* tID)
 Use:				Insert widget into buffer N_P_STEPS number of times
 Arguments:	tID - ID of the thread running the function
 Returns:		none
 *******************************************************************************/
-void* insert_run(void* tID){
-	int *ID = (void*) tID;
+void* produce_run(void* tID){
+	int *ID = tID;
 	for(int i = 0; i < N_P_STEPS; i++)
 	{	// Produce widget for each step
+		sleep(1);
 		if(sem_wait(&not_full))
 		{	// If failed, print error
 			fprintf(stderr, "Semaphore not_full failed to wait");
 			exit(-1);
 		}
-		if(pthread_mutex_lock(&counter_lock))
-		{	// If failed, print error
-			fprintf(stderr, "Mutex counter_lock failed to lock");
-			exit(-1);
-		}
-		widgets++;
-		printf("Producer %d inserted a widget. Total is now %d\n", *ID,
-			(int)widgets);
+		insert_widget(*ID);
 		if(sem_post(&not_empty))
 		{	// If failed, print error
 			fprintf(stderr, "Semaphore not_empty failed to post");
 			exit(-1);
 		}
-		if(pthread_mutex_unlock(&counter_lock))
-		{	// If failed, print error
-			fprintf(stderr, "Mutex counter_lock failed to unlock\n");
-			exit(-1);
-		}
-		sleep(1);
 	}
-	return NULL;
+	pthread_exit(0);
 }
-/////////////////////////////////  Functions  //////////////////////////////////
 /*******************************************************************************
-Function:		void* remove_run(void* tID)
+Function:		void* consume_run(void* tID)
 Use:				Remove widget from buffer N_C_STEPS number of times
 Arguments:	tID - ID of the thread running the function
 Returns:		none
 *******************************************************************************/
-void* remove_run(void* tID){
-	int *ID = (void*) tID;
+void* consume_run(void* tID){
+	int *ID = tID;
 	for(int i = 0; i < N_C_STEPS; i++)
 	{	// Consume widget for each step
+		sleep(1);
 		if(sem_wait(&not_empty))
 		{	// If failed, print error
 			fprintf(stderr, "Semaphore not_empty failed to wait");
 			exit(-1);
 		}
-		if(pthread_mutex_lock(&counter_lock))
-		{	// If failed, print error
-			fprintf(stderr, "Mutex counter_lock failed to lock");
-			exit(-1);
-		}
-		widgets--;
-		printf("Consumer %d removed a widget. Total is now %d\n", *ID,
-			(int)widgets);
+		remove_widget(*ID);
 		if(sem_post(&not_full))
 		{	// If failed, print error
 			fprintf(stderr, "Semaphore not_full failed to post");
 			exit(-1);
 		}
-		if(pthread_mutex_unlock(&counter_lock))
-		{	// If failed, print error
-			fprintf(stderr, "Mutex counter_lock failed to unlock\n");
-			exit(-1);
-		}
-		sleep(1);
 	}
-	return NULL;
+	pthread_exit(0);
+}
+/*******************************************************************************
+Function:		void insert_widget(int tID)
+Use:				Inserts a widget into the buffer
+Arguments:	tID - ID of the pthread calling the function
+Returns:		none
+*******************************************************************************/
+void insert_widget(int tID){
+	if(pthread_mutex_lock(&counter_lock))
+	{	// If failed, print error
+		fprintf(stderr, "Mutex counter_lock failed to lock");
+		exit(-1);
+	}
+	widgets++;
+	printf("Producer %d inserted a widget. Total is now %d\n", tID,
+		(int)widgets);
+	if(pthread_mutex_unlock(&counter_lock))
+	{	// If failed, print error
+		fprintf(stderr, "Mutex counter_lock failed to unlock\n");
+		exit(-1);
+	}
+}
+/*******************************************************************************
+Function:		void remove_widget(int tID)
+Use:				Removes a widget into the buffer
+Arguments:	tID - ID of the pthread calling the function
+Returns:		none
+*******************************************************************************/
+void remove_widget(int tID){
+	if(pthread_mutex_lock(&counter_lock))
+	{	// If failed, print error
+		fprintf(stderr, "Mutex counter_lock failed to lock");
+		exit(-1);
+	}
+	widgets--;
+	printf("Consumer %d removed a widget. Total is now %d\n", tID,
+		(int)widgets);
+	if(pthread_mutex_unlock(&counter_lock))
+	{	// If failed, print error
+		fprintf(stderr, "Mutex counter_lock failed to unlock\n");
+		exit(-1);
+	}
 }
