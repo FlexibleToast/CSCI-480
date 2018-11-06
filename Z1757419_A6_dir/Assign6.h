@@ -24,6 +24,7 @@ void load_first(vector<string>&);
 void print_avail();
 void print_inuse();
 void tokenize(string, vector<string>&);
+void defrag();
 
 
 // Set global constants

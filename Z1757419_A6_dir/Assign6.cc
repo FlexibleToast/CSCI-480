@@ -177,3 +177,26 @@ void tokenize(string line, vector<string> &tokens){
 	}
 	return;
 }
+/*******************************************************************************
+Function:
+Use:
+Arguments:
+Returns:
+*******************************************************************************/
+void defrag(){
+	list<Memblock>::iterator prev_it, it;
+	prev_it = it = avail.begin();
+	it++;
+	while(prev_it != avail.end())
+	{
+		if(prev_it->get_end() == it->get_start()
+			&& prev_it->get_size() + it->get_size() <= 4 * MB)
+		{
+			prev_it->set_size(prev_it->get_size() + it->get_size());
+			avail.erase(it++);
+			continue;
+		}
+		prev_it++;
+		it++;
+	}
+}
