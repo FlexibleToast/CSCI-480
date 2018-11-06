@@ -12,10 +12,19 @@
 #include <iomanip>
 #include <list>
 #include <string>
+#include <fstream>
+#include <vector>
+#include <string.h>
 
 // Prototyping statements
 void initialize_avail();
+void readline(string);
+void load_best(vector<string>&);
+void load_first(vector<string>&);
 void print_avail();
+void print_inuse();
+void tokenize(string, vector<string>&);
+
 
 // Set global constants
 #define HOW_OFTEN 5
@@ -24,5 +33,6 @@ void print_avail();
 
 // Global variables
 list<Memblock> avail, inuse;
+bool best_fit = false;
 
 #endif
