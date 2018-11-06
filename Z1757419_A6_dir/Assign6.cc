@@ -25,6 +25,7 @@ int main(int argc, char *args[]){
 		cerr << "Must provide 1 argument, B for best fit or F for first fit" <<endl;
 		exit(-1);
 	}
+	initialize_avail();
 	ifstream file;
 	file.open("data60.txt");
 	if(file.fail())
@@ -37,7 +38,6 @@ int main(int argc, char *args[]){
 	{
 		readline(line);
 	}
-	initialize_avail();
 	print_avail();
 	print_inuse();
 	file.close();
@@ -92,7 +92,36 @@ Arguments:
 Returns:
 *******************************************************************************/
 void load_best(vector<string> &line){
-	cout << "Place holder" << endl;
+	Memblock load(0, stoi(line[2]), line[1], line[3]);
+	list<Memblock>::iterator it, best;
+	it = avail.begin();
+	size_t smallest = 4 * MB;
+	bool found = false;
+	while(it != avail.end()){
+		if(it->get_size() > load.get_size()
+			&& it->get_size() < smallest)
+		{
+			found = true;
+			smallest = it->get_size();
+			best = it;
+		}
+		it++;
+	}
+	if(found)
+	{
+		load.set_start(best->get_start());
+		best->set_start(best->get_start() + load.get_size());
+		best->set_size(best->get_size() - load.get_size());
+		if(best->get_size() == 0)
+			avail.erase(best);
+		inuse.push_back(load);
+	} else {
+		cerr << "No large enough free block found for PID: "<< load.get_process_id()
+			<< ", Block ID: " << load.get_block_id()
+			<< ", with size: " << setprecision(2) << fixed
+			<< (float)load.get_size()/MB << "MB" << endl;
+		exit(-1);
+	}
 }
 /*******************************************************************************
 Function:
@@ -101,11 +130,25 @@ Arguments:
 Returns:
 *******************************************************************************/
 void load_first(vector<string> &line){
-	vector<string>::iterator it = line.begin();
-	while(it != line.end())
-	{
-		cout << *it << endl;
+	Memblock load(0, stoi(line[2]), line[1], line[3]);
+	list<Memblock>::iterator it = avail.begin();
+	while(it->get_size() < load.get_size()){
 		it++;
+	}
+	if(it->get_size() > load.get_size())
+	{
+		load.set_start(it->get_start());
+		it->set_start(it->get_start() + load.get_size());
+		it->set_size(it->get_size() - load.get_size());
+		if(it->get_size() == 0)
+			avail.erase(it);
+		inuse.push_back(load);
+	} else {
+		cerr << "No large enough free block found for PID: "<< load.get_process_id()
+			<< ", Block ID: " << load.get_block_id()
+			<< ", with size: " << setprecision(2) << fixed
+			<< (float)load.get_size()/MB << "MB" << endl;
+		exit(-1);
 	}
 }
 /*******************************************************************************
