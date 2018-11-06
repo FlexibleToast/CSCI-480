@@ -21,3 +21,6 @@ A simulation of processes moving through different queues on a single processor.
 
 ## Assign 5
 A simulation of the *Producers and Consumers* problem. Using POSIX threads multiple producer thread will be created. Each thread creates a "widget" and places it in a buffer, represented by incrementing a counter. Multiple consumer threads are also created. Each consumer thread removes a widget from the buffer, represented by decrementing a counter. Reading the size of the buffer will be done using semaphores while the incrementing/decrementing will be controlled by a mutex.
+
+## Assign 6
+A simulation in memory management. In this assignment we assume we have a small computer with only 16MB of memory and that the OS has taken the initial 3MB. Initially we keep track of available memory starting from 3MB and having 5 blocks (1MB, 2MB, 2MB, 4MB, 4MB) totaling the remaining 13MB. The simulation then reads a file and allocates, loads, deallocates, and terminates memory as it progresses. One of two arguments can be passed to the program to indicate to use the *first-fit* or *best-fit* algorithm for assigning memory.
