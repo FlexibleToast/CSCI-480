@@ -27,7 +27,7 @@ int main(int argc, char *args[]){
 	}
 	initialize_avail();
 	ifstream file;
-	file.open("data60.txt");
+	file.open("data6.txt");
 	if(file.fail())
 	{
 		cerr << "Failed to open file data6.txt" << endl;
@@ -82,6 +82,12 @@ void readline(string line){
 		} else {
 			load_first(tokens);
 		}
+	} else if(tokens[0] == "A"){
+		if(best_fit){
+			allocate_best(tokens);
+		} else {
+			allocate_first(tokens);
+		}
 	}
 	return;
 }
@@ -99,7 +105,7 @@ void load_best(vector<string> &line){
 	bool found = false;
 	while(it != avail.end()){
 		if(it->get_size() > load.get_size()
-			&& it->get_size() < smallest)
+			&& it->get_size() <= smallest)
 		{
 			found = true;
 			smallest = it->get_size();
@@ -114,7 +120,7 @@ void load_best(vector<string> &line){
 		best->set_size(best->get_size() - load.get_size());
 		if(best->get_size() == 0)
 			avail.erase(best);
-		inuse.push_back(load);
+		inuse.push_front(load);
 	} else {
 		cerr << "No large enough free block found for PID: "<< load.get_process_id()
 			<< ", Block ID: " << load.get_block_id()
@@ -142,7 +148,7 @@ void load_first(vector<string> &line){
 		it->set_size(it->get_size() - load.get_size());
 		if(it->get_size() == 0)
 			avail.erase(it);
-		inuse.push_back(load);
+		inuse.push_front(load);
 	} else {
 		cerr << "No large enough free block found for PID: "<< load.get_process_id()
 			<< ", Block ID: " << load.get_block_id()
@@ -150,6 +156,24 @@ void load_first(vector<string> &line){
 			<< (float)load.get_size()/MB << "MB" << endl;
 		exit(-1);
 	}
+}
+/*******************************************************************************
+Function:
+Use:
+Arguments:
+Returns:
+*******************************************************************************/
+void allocate_best(vector<string> &line){
+	load_best(line);
+}
+/*******************************************************************************
+Function:
+Use:
+Arguments:
+Returns:
+*******************************************************************************/
+void allocate_first(vector<string> &line){
+	load_first(line);
 }
 /*******************************************************************************
 Function:
