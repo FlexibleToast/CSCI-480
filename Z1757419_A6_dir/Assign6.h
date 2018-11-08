@@ -23,6 +23,8 @@ void load_best(vector<string>&);
 void load_first(vector<string>&);
 void allocate_best(vector<string>&);
 void allocate_first(vector<string>&);
+void deallocate(string, string);
+void terminate(string);
 void print_avail();
 void print_inuse();
 void tokenize(string, vector<string>&);

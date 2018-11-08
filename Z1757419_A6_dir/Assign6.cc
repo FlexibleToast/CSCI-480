@@ -25,6 +25,7 @@ int main(int argc, char *args[]){
 		cerr << "Must provide 1 argument, B for best fit or F for first fit" <<endl;
 		exit(-1);
 	}
+	size_t sim_counter = 0;
 	initialize_avail();
 	ifstream file;
 	file.open("data6.txt");
@@ -36,8 +37,19 @@ int main(int argc, char *args[]){
 	string line;
 	while(getline(file, line))
 	{
+		// if(sim_counter % HOW_OFTEN == 0){
+		// 	cout << "********************************************************" << endl
+		// 		<< "Current simulation cycle: " << sim_counter
+		// 		<< ", current memory states:" << endl;
+		// 		print_avail();
+		// 		print_inuse();
+		// }
 		readline(line);
+		sim_counter++;
 	}
+	cout << "********************************************************" << endl
+		<< "Simulation completed with " << sim_counter << " cycles." << endl
+		<< "Current memory states:" << endl;
 	print_avail();
 	print_inuse();
 	file.close();
@@ -88,6 +100,11 @@ void readline(string line){
 		} else {
 			allocate_first(tokens);
 		}
+	} else if(tokens[0] == "D"){
+		deallocate(tokens[1], tokens[2]);
+	} else if(tokens[0] == "T"){
+		cerr << "Terminating: " << tokens[1] << endl;
+		terminate(tokens[1]);
 	}
 	return;
 }
@@ -122,9 +139,10 @@ void load_best(vector<string> &line){
 			avail.erase(best);
 		inuse.push_front(load);
 	} else {
-		cerr << "No large enough free block found for PID: "<< load.get_process_id()
-			<< ", Block ID: " << load.get_block_id()
-			<< ", with size: " << setprecision(2) << fixed
+		cerr << "No large enough free block found for Block" << endl
+		 	<< "PID: "<< load.get_process_id() << endl
+			<< "Block ID: " << load.get_block_id() << endl
+			<< "Size: " << setprecision(2) << fixed
 			<< (float)load.get_size()/MB << "MB" << endl;
 		exit(-1);
 	}
@@ -150,9 +168,10 @@ void load_first(vector<string> &line){
 			avail.erase(it);
 		inuse.push_front(load);
 	} else {
-		cerr << "No large enough free block found for PID: "<< load.get_process_id()
-			<< ", Block ID: " << load.get_block_id()
-			<< ", with size: " << setprecision(2) << fixed
+		cerr << "No large enough free block found for Block" << endl
+		 	<< "PID: "<< load.get_process_id() << endl
+			<< "Block ID: " << load.get_block_id() << endl
+			<< "Size: " << setprecision(2) << fixed
 			<< (float)load.get_size()/MB << "MB" << endl;
 		exit(-1);
 	}
@@ -181,6 +200,62 @@ Use:
 Arguments:
 Returns:
 *******************************************************************************/
+void deallocate(string deproc, string deblock){
+	list<Memblock>::iterator deuse = inuse.begin();
+	list<Memblock>::iterator make_avail = avail.begin();
+	bool found = false;
+	while(deuse != inuse.end())
+	{
+		if(deuse->get_process_id() == deproc && deuse->get_block_id() == deblock)
+		{
+			found = true;
+			break;
+		}
+		deuse++;
+	}
+	if(found){
+		while(make_avail->get_start() < deuse->get_start())
+			make_avail++;
+		Memblock new_available(deuse->get_start(), deuse->get_size());
+		avail.insert(make_avail, new_available);
+		inuse.erase(deuse);
+		defrag();
+	} else {
+		cerr << "* Cannot deallocate, block not found *" << endl
+		 	<< "PID: "<< deproc << endl
+			<< "Block ID: " << deblock << endl;
+	}
+}
+/*******************************************************************************
+Function:
+Use:
+Arguments:
+Returns:
+*******************************************************************************/
+void terminate(string term){
+	bool found;
+	list<Memblock>::iterator it;
+	do {
+		it = inuse.begin();
+		found = false;
+		while(it != inuse.end()){
+			if(it->get_process_id() == term){
+				cout << "found block to terminate" << endl;
+				deallocate(it->get_process_id(), it->get_block_id());
+				found = true;
+				break;
+			}
+			cout << term << " does not match " << it->get_process_id() << endl;
+			it++;
+		}
+	} while(found);
+}
+/*******************************************************************************
+Function:
+Use:
+Arguments:
+Returns:
+*******************************************************************************/
 void print_avail(){
 	if(avail.empty())
 	{
@@ -194,12 +269,12 @@ void print_avail(){
 		total += it->get_size();
 		cout << "Starting address: " << it->get_start()
 			<< ", size: " << it->get_size()
-			<< ", size in MB: " << setprecision(2) << fixed
-			<< (float)it->get_size()/MB << endl;
+			<< " B, size in MB: " << setprecision(2) << fixed
+			<< (float)it->get_size()/MB << " MB" << endl;
 		it++;
 	}
 	cout << "Total size of available memory space: "
-		<< setprecision(2) << fixed << (float)total/MB << "MB" << endl;
+		<< setprecision(2) << fixed << (float)total/MB << " MB" << endl;
 }
 /*******************************************************************************
 Function:
@@ -222,12 +297,12 @@ void print_inuse(){
 			<< ", Block ID: " << it->get_block_id() << endl
 			<< "Starting address: " << it->get_start()
 			<< ", size: " << it->get_size()
-			<< ", size in MB: " << setprecision(2) << fixed
-			<< (float)it->get_size()/MB << endl;
+			<< " B, size in MB: " << setprecision(2) << fixed
+			<< (float)it->get_size()/MB << " MB" << endl;
 		it++;
 	}
 	cout << "Total memory in use: "
-		<< setprecision(2) << fixed << (float)total/MB << "MB" << endl;
+		<< setprecision(2) << fixed << (float)total/MB << " MB" << endl;
 }
 /*******************************************************************************
 Function:
