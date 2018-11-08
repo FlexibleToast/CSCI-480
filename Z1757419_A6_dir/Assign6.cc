@@ -37,13 +37,13 @@ int main(int argc, char *args[]){
 	string line;
 	while(getline(file, line))
 	{
-		// if(sim_counter % HOW_OFTEN == 0){
-		// 	cout << "********************************************************" << endl
-		// 		<< "Current simulation cycle: " << sim_counter
-		// 		<< ", current memory states:" << endl;
-		// 		print_avail();
-		// 		print_inuse();
-		// }
+		if(sim_counter % HOW_OFTEN == 0){
+			cout << "********************************************************" << endl
+				<< "Current simulation cycle: " << sim_counter
+				<< ", current memory states:" << endl;
+				print_avail();
+				print_inuse();
+		}
 		readline(line);
 		sim_counter++;
 	}
@@ -103,7 +103,6 @@ void readline(string line){
 	} else if(tokens[0] == "D"){
 		deallocate(tokens[1], tokens[2]);
 	} else if(tokens[0] == "T"){
-		cerr << "Terminating: " << tokens[1] << endl;
 		terminate(tokens[1]);
 	}
 	return;
@@ -240,12 +239,10 @@ void terminate(string term){
 		found = false;
 		while(it != inuse.end()){
 			if(it->get_process_id() == term){
-				cout << "found block to terminate" << endl;
 				deallocate(it->get_process_id(), it->get_block_id());
 				found = true;
 				break;
 			}
-			cout << term << " does not match " << it->get_process_id() << endl;
 			it++;
 		}
 	} while(found);
