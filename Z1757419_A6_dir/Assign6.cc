@@ -5,7 +5,10 @@
    DUE DATE:		11/14/2018
 	 Note:				Uses hard tabs set to display as 2 spaces
 
-   FUNCTION:
+   FUNCTION:		Simulates memory management functions such as loading a program,
+	 							allocating, terminating a program, deallocating space. The sim
+								can take a variable F or B for either first-fit algorithm or
+								best-fit algorithm.
 *******************************************************************************/
 
 #include "Memblock.h"
@@ -57,10 +60,10 @@ int main(int argc, char *args[]){
 }
 /////////////////////////////////  Functions  //////////////////////////////////
 /*******************************************************************************
-Function:
-Use:
-Arguments:
-Returns:
+Function:		void initialize_avail()
+Use:				Initializes the available space in blocks of 1MB, 2*2MB, and 2*4MB
+Arguments:	none
+Returns:		none
 *******************************************************************************/
 void initialize_avail(){
 	// First empty block starting at 3MB and 1MB in size
@@ -80,10 +83,11 @@ void initialize_avail(){
 	avail.push_back(new_block);
 }
 /*******************************************************************************
-Function:
-Use:
-Arguments:
-Returns:
+Function:		void readline(string line)
+Use:				Reads contents of line and determines what steps of simulation to
+						perform
+Arguments:	line - String that is used to tell simulation what steps to perform
+Returns:		none
 *******************************************************************************/
 void readline(string line){
 	vector<string> tokens;
@@ -108,13 +112,13 @@ void readline(string line){
 	return;
 }
 /*******************************************************************************
-Function:
-Use:
-Arguments:
-Returns:
+Function:		void load_best(vector<string> &tokens)
+Use:				Loads program to memory using best-fit algorithm
+Arguments:	&tokens - A vector containing a tokenized string
+Returns:		none
 *******************************************************************************/
-void load_best(vector<string> &line){
-	Memblock load(0, stoi(line[2]), line[1], line[3]);
+void load_best(vector<string> &tokens){
+	Memblock load(0, stoi(tokens[2]), tokens[1], tokens[3]);
 	list<Memblock>::iterator it, best;
 	it = avail.begin();
 	size_t smallest = 4 * MB;
@@ -147,10 +151,10 @@ void load_best(vector<string> &line){
 	}
 }
 /*******************************************************************************
-Function:
-Use:
-Arguments:
-Returns:
+Function:		void load_first(vector<string> &line)
+Use:				Loads program to memory using first-fit algorithm
+Arguments:	&tokens - A vector containing a tokenized string
+Returns:		none
 *******************************************************************************/
 void load_first(vector<string> &line){
 	Memblock load(0, stoi(line[2]), line[1], line[3]);
@@ -176,28 +180,29 @@ void load_first(vector<string> &line){
 	}
 }
 /*******************************************************************************
-Function:
-Use:
-Arguments:
-Returns:
+Function:		void allocate_best(vector<string> &tokens)
+Use:				Calls load_best to allocate memory for a block using best-fit
+Arguments:	tokens - A vector containing a tokenized sting
+Returns:		none
 *******************************************************************************/
-void allocate_best(vector<string> &line){
-	load_best(line);
+void allocate_best(vector<string> &tokens){
+	load_best(tokens);
 }
 /*******************************************************************************
-Function:
-Use:
-Arguments:
-Returns:
+Function:		void allocate_first(vector<string> &tokens)
+Use:				Calls load_first to allocate memory for a block using first-fit
+Arguments:	tokens - A vector containing a tokenized sting
+Returns:		none
 *******************************************************************************/
-void allocate_first(vector<string> &line){
-	load_first(line);
+void allocate_first(vector<string> &tokens){
+	load_first(tokens);
 }
 /*******************************************************************************
-Function:
-Use:
-Arguments:
-Returns:
+Function:		void deallocate(string deproc, string deblock)
+Use:				Deallocates a block of memory
+Arguments:	deproc - The process id of the block to be deallocated
+						deblock - The block id of the blcok to be deallocated
+Returns:		none
 *******************************************************************************/
 void deallocate(string deproc, string deblock){
 	list<Memblock>::iterator deuse = inuse.begin();
@@ -226,19 +231,19 @@ void deallocate(string deproc, string deblock){
 	}
 }
 /*******************************************************************************
-Function:
-Use:
-Arguments:
+Function:		void terminate(string proc_id)
+Use:				Deallocates all blocks associate with a process id
+Arguments:	proc_id - The process id of the process to be terminate
 Returns:
 *******************************************************************************/
-void terminate(string term){
+void terminate(string proc_id){
 	bool found;
 	list<Memblock>::iterator it;
 	do {
 		it = inuse.begin();
 		found = false;
 		while(it != inuse.end()){
-			if(it->get_process_id() == term){
+			if(it->get_process_id() == proc_id){
 				deallocate(it->get_process_id(), it->get_block_id());
 				found = true;
 				break;
@@ -308,13 +313,15 @@ Arguments:
 Returns:
 *******************************************************************************/
 void tokenize(string line, vector<string> &tokens){
+	//line.erase(line.size() - 1); //Remove '\r' from data6.txt
+	if(line[line.size() - 1] == '\r')
+		line.erase(line.end()-1,line.end());
 	char* token = strtok((char*)line.c_str(), " ");
 	while(token)
 	{
 		tokens.push_back((string)token);
 		token = strtok(NULL, " ");
 	}
-	return;
 }
 /*******************************************************************************
 Function:
