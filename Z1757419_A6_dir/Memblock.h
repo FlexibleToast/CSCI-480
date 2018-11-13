@@ -36,11 +36,6 @@ class Memblock
 		void update(int, size_t);
 		void update(int, size_t, string, string);
 
-    //Utility Methods
-
-		//Operator Overload
-		Memblock& operator=(const Memblock&);
-
   private:
 		int start;
 		size_t size;

@@ -234,7 +234,7 @@ void deallocate(string deproc, string deblock){
 Function:		void terminate(string proc_id)
 Use:				Deallocates all blocks associate with a process id
 Arguments:	proc_id - The process id of the process to be terminate
-Returns:
+Returns:		none
 *******************************************************************************/
 void terminate(string proc_id){
 	bool found;
@@ -253,10 +253,10 @@ void terminate(string proc_id){
 	} while(found);
 }
 /*******************************************************************************
-Function:
-Use:
-Arguments:
-Returns:
+Function:		void print_avail()
+Use:				Prints list of the available blocks of memory
+Arguments:	none
+Returns:		none
 *******************************************************************************/
 void print_avail(){
 	if(avail.empty())
@@ -279,10 +279,10 @@ void print_avail(){
 		<< setprecision(2) << fixed << (float)total/MB << " MB" << endl;
 }
 /*******************************************************************************
-Function:
-Use:
-Arguments:
-Returns:
+Function:		void print_inuse()
+Use:				Prints list of blocks of memory in use
+Arguments:	none
+Returns:		none
 *******************************************************************************/
 void print_inuse(){
 	if(inuse.empty())
@@ -307,13 +307,13 @@ void print_inuse(){
 		<< setprecision(2) << fixed << (float)total/MB << " MB" << endl;
 }
 /*******************************************************************************
-Function:
-Use:
-Arguments:
-Returns:
+Function:		void tokenize(string line, vector<string> &tokens)
+Use:				Tokenizes a line received as input
+Arguments:	line - String to tokenize
+						tokens - A vector to contain the tokens
+Returns:		none
 *******************************************************************************/
 void tokenize(string line, vector<string> &tokens){
-	//line.erase(line.size() - 1); //Remove '\r' from data6.txt
 	if(line[line.size() - 1] == '\r')
 		line.erase(line.end()-1,line.end());
 	char* token = strtok((char*)line.c_str(), " ");
@@ -324,10 +324,10 @@ void tokenize(string line, vector<string> &tokens){
 	}
 }
 /*******************************************************************************
-Function:
-Use:
-Arguments:
-Returns:
+Function:		void defrag()
+Use:				Defragments the available memory merging blocks up to a total 4MB
+Arguments:	none
+Returns:		none
 *******************************************************************************/
 void defrag(){
 	list<Memblock>::iterator prev_it, it;
