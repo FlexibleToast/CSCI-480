@@ -15,11 +15,15 @@
 #include "Assign6.h"
 
 int main(int argc, char *args[]){
-	if(argc == 2){
+	if(argc == 2){	// Check number of aruments is correct and valid input
 		if(strcmp(args[1], "B") == 0){
 			best_fit = true;
+			cout << "Simulation of Memory Management using Best-Fit algorithm"
+				<< endl << endl;
 		} else if(strcmp(args[1], "F") == 0){
 			best_fit = false;
+			cout << "Simulation of Memory Management using First-Fit algorithm"
+				<< endl << endl;
 		} else {
 			cerr << "Must use argument B for best fit or F for first fit" << endl;
 			exit(-1);
@@ -32,27 +36,27 @@ int main(int argc, char *args[]){
 	initialize_avail();
 	ifstream file;
 	file.open("data6.txt");
-	if(file.fail())
-	{
+	if(file.fail()){
 		cerr << "Failed to open file data6.txt" << endl;
 		exit(-1);
 	}
 	string line;
 	while(getline(file, line))
-	{
-		if(sim_counter % HOW_OFTEN == 0){
+	{	// Read each line from the file for instructions
+		if(sim_counter % HOW_OFTEN == 0){	// Print current status every HOW_OFTEN
 			cout << "********************************************************" << endl
 				<< "Current simulation cycle: " << sim_counter
-				<< ", current memory states:" << endl;
+				<< ", current memory states:" << endl << endl;
 				print_avail();
 				print_inuse();
+				cout << endl;
 		}
 		readline(line);
 		sim_counter++;
 	}
 	cout << "********************************************************" << endl
 		<< "Simulation completed with " << sim_counter << " cycles." << endl
-		<< "Current memory states:" << endl;
+		<< "Current memory states:" << endl << endl;
 	print_avail();
 	print_inuse();
 	file.close();
@@ -92,21 +96,31 @@ Returns:		none
 void readline(string line){
 	vector<string> tokens;
 	tokenize(line, tokens);
-	if(tokens[0] == "L"){
-		if(best_fit){
+	if(tokens[0] == "L"){	// Load function
+		cout << "Transaction: loading process " << tokens[1]
+			<< ", block ID " << tokens[3] << " using "
+			<< tokens[2] << " bytes" << endl;
+		if(best_fit){	// Using best fit
 			load_best(tokens);
-		} else {
+		} else {	// Using first fit
 			load_first(tokens);
 		}
-	} else if(tokens[0] == "A"){
-		if(best_fit){
+	} else if(tokens[0] == "A"){	// Allocating function
+		cout << "Transaction: allocate " << tokens[2]
+			<< " bytes for process " << tokens[1]
+			<< ", block ID: " << tokens[3] << endl;
+		if(best_fit){	// Using best fit
 			allocate_best(tokens);
-		} else {
+		} else {	// Using first fit
 			allocate_first(tokens);
 		}
-	} else if(tokens[0] == "D"){
+	} else if(tokens[0] == "D"){	// Deallocate function
+		cout << "Transaction: deallocate block ID " << tokens[2]
+			<< " for process " << tokens[1] << endl;
 		deallocate(tokens[1], tokens[2]);
-	} else if(tokens[0] == "T"){
+		cout << endl;
+	} else if(tokens[0] == "T"){	// Terminate function
+		cout << "Transaction: terminate process " << tokens[1] << endl;
 		terminate(tokens[1]);
 	}
 	return;
@@ -121,62 +135,64 @@ void load_best(vector<string> &tokens){
 	Memblock load(0, stoi(tokens[2]), tokens[1], tokens[3]);
 	list<Memblock>::iterator it, best;
 	it = avail.begin();
-	size_t smallest = 4 * MB;
+	size_t smallest = 4 * MB + 1; // Start with block larger than possible
 	bool found = false;
 	while(it != avail.end()){
 		if(it->get_size() > load.get_size()
-			&& it->get_size() <= smallest)
-		{
+			&& it->get_size() < smallest)
+		{	// Find smallest fitting block
 			found = true;
 			smallest = it->get_size();
 			best = it;
 		}
 		it++;
 	}
-	if(found)
-	{
+	if(found){
 		load.set_start(best->get_start());
 		best->set_start(best->get_start() + load.get_size());
 		best->set_size(best->get_size() - load.get_size());
 		if(best->get_size() == 0)
 			avail.erase(best);
 		inuse.push_front(load);
-	} else {
+		cout << "Successfully loaded block for process " << tokens[1]
+			<< " and block ID " << tokens[3] << endl << endl;
+	} else {	// Not found
 		cerr << "No large enough free block found for Block" << endl
 		 	<< "PID: "<< load.get_process_id() << endl
 			<< "Block ID: " << load.get_block_id() << endl
 			<< "Size: " << setprecision(2) << fixed
-			<< (float)load.get_size()/MB << "MB" << endl;
-		exit(-1);
+			<< (float)load.get_size()/MB << "MB" << endl << endl;
 	}
 }
 /*******************************************************************************
-Function:		void load_first(vector<string> &line)
+Function:		void load_first(vector<string> &tokens)
 Use:				Loads program to memory using first-fit algorithm
 Arguments:	&tokens - A vector containing a tokenized string
 Returns:		none
 *******************************************************************************/
-void load_first(vector<string> &line){
-	Memblock load(0, stoi(line[2]), line[1], line[3]);
+void load_first(vector<string> &tokens){
+	Memblock load(0, stoi(tokens[2]), tokens[1], tokens[3]);
 	list<Memblock>::iterator it = avail.begin();
-	while(it->get_size() < load.get_size()){
+	while(it->get_size() < load.get_size()
+		&& it != avail.end()){	// Search for first large enough available block
 		it++;
 	}
 	if(it->get_size() > load.get_size())
-	{
+	{	// If the size avail is less than needed, never found large enough size
 		load.set_start(it->get_start());
 		it->set_start(it->get_start() + load.get_size());
 		it->set_size(it->get_size() - load.get_size());
-		if(it->get_size() == 0)
+		if(it->get_size() == 0)	// If avail block is now empty, erase it
 			avail.erase(it);
 		inuse.push_front(load);
-	} else {
+		cout << "Successfully loaded block for process " << tokens[1]
+			<< " and block ID " << tokens[3] << endl << endl;
+	} else {	// Didn't find large enough block
 		cerr << "No large enough free block found for Block" << endl
 		 	<< "PID: "<< load.get_process_id() << endl
 			<< "Block ID: " << load.get_block_id() << endl
 			<< "Size: " << setprecision(2) << fixed
-			<< (float)load.get_size()/MB << "MB" << endl;
-		exit(-1);
+			<< (float)load.get_size()/MB << "MB" << endl <<endl;
 	}
 }
 /*******************************************************************************
@@ -208,10 +224,9 @@ void deallocate(string deproc, string deblock){
 	list<Memblock>::iterator deuse = inuse.begin();
 	list<Memblock>::iterator make_avail = avail.begin();
 	bool found = false;
-	while(deuse != inuse.end())
-	{
+	while(deuse != inuse.end()){
 		if(deuse->get_process_id() == deproc && deuse->get_block_id() == deblock)
-		{
+		{	// Block found matches block to deallocate, mark found and stop searching
 			found = true;
 			break;
 		}
@@ -223,11 +238,13 @@ void deallocate(string deproc, string deblock){
 		Memblock new_available(deuse->get_start(), deuse->get_size());
 		avail.insert(make_avail, new_available);
 		inuse.erase(deuse);
+		cout << "Successfully deallocated block for process " << deproc
+			<< " with block ID " << deblock << endl;
 		defrag();
-	} else {
+	} else {	// Not found
 		cerr << "* Cannot deallocate, block not found *" << endl
 		 	<< "PID: "<< deproc << endl
-			<< "Block ID: " << deblock << endl;
+			<< "Block ID: " << deblock << endl << endl;
 	}
 }
 /*******************************************************************************
@@ -237,20 +254,27 @@ Arguments:	proc_id - The process id of the process to be terminate
 Returns:		none
 *******************************************************************************/
 void terminate(string proc_id){
-	bool found;
+	bool found, found_once = false;
 	list<Memblock>::iterator it;
-	do {
+	do {	// Search for a block with matching process ID
 		it = inuse.begin();
 		found = false;
 		while(it != inuse.end()){
 			if(it->get_process_id() == proc_id){
 				deallocate(it->get_process_id(), it->get_block_id());
 				found = true;
+				found_once = true;
 				break;
 			}
 			it++;
 		}
-	} while(found);
+	} while(found);	// Seach for next matching block if found
+	if(!found_once){	// If never found a matching block, error
+		cerr << "Unable to terminate process " << proc_id << " was not found"
+			<< endl << endl;
+	} else {
+		cout << "Successfully terminated process " << proc_id << endl << endl;
+	}
 }
 /*******************************************************************************
 Function:		void print_avail()
@@ -259,8 +283,7 @@ Arguments:	none
 Returns:		none
 *******************************************************************************/
 void print_avail(){
-	if(avail.empty())
-	{
+	if(avail.empty()){
 		cout << "There is no more free memory." << endl;
 		return;
 	}
@@ -271,12 +294,12 @@ void print_avail(){
 		total += it->get_size();
 		cout << "Starting address: " << it->get_start()
 			<< ", size: " << it->get_size()
-			<< " B, size in MB: " << setprecision(2) << fixed
+			<< " B, size in megabytes: " << setprecision(2) << fixed
 			<< (float)it->get_size()/MB << " MB" << endl;
 		it++;
 	}
 	cout << "Total size of available memory space: "
-		<< setprecision(2) << fixed << (float)total/MB << " MB" << endl;
+		<< setprecision(2) << fixed << (float)total/MB << " MB" << endl << endl;
 }
 /*******************************************************************************
 Function:		void print_inuse()
@@ -285,8 +308,7 @@ Arguments:	none
 Returns:		none
 *******************************************************************************/
 void print_inuse(){
-	if(inuse.empty())
-	{
+	if(inuse.empty()){
 		cout << "No memory in use." << endl;
 		return;
 	}
@@ -299,12 +321,12 @@ void print_inuse(){
 			<< ", Block ID: " << it->get_block_id() << endl
 			<< "Starting address: " << it->get_start()
 			<< ", size: " << it->get_size()
-			<< " B, size in MB: " << setprecision(2) << fixed
+			<< " B, size in megabytes: " << setprecision(2) << fixed
 			<< (float)it->get_size()/MB << " MB" << endl;
 		it++;
 	}
 	cout << "Total memory in use: "
-		<< setprecision(2) << fixed << (float)total/MB << " MB" << endl;
+		<< setprecision(2) << fixed << (float)total/MB << " MB" << endl << endl;
 }
 /*******************************************************************************
 Function:		void tokenize(string line, vector<string> &tokens)
@@ -314,11 +336,11 @@ Arguments:	line - String to tokenize
 Returns:		none
 *******************************************************************************/
 void tokenize(string line, vector<string> &tokens){
-	if(line[line.size() - 1] == '\r')
+	if(line[line.size() - 1] == '\r')	// Remove carriage return if found
 		line.erase(line.end()-1,line.end());
 	char* token = strtok((char*)line.c_str(), " ");
 	while(token)
-	{
+	{	// Gather all tokens
 		tokens.push_back((string)token);
 		token = strtok(NULL, " ");
 	}
@@ -333,11 +355,13 @@ void defrag(){
 	list<Memblock>::iterator prev_it, it;
 	prev_it = it = avail.begin();
 	it++;
-	while(prev_it != avail.end())
-	{
+	while(prev_it != avail.end()){
 		if(prev_it->get_end() == it->get_start()
 			&& prev_it->get_size() + it->get_size() <= 4 * MB)
-		{
+		{	// If adjecent blocks are less than 4MB, merge them
+			cout << "Merging two blocks at "
+				<< prev_it->get_start() << " and "
+				<< it->get_start() << endl;
 			prev_it->set_size(prev_it->get_size() + it->get_size());
 			avail.erase(it++);
 			continue;
