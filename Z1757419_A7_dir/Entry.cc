@@ -17,23 +17,20 @@
  * Arguments: none
  * Notes:     Builds the file
  ******************************************************************************/
-Entry::Entry(int new_start, int sim_counter){
+Entry::Entry(int new_start){
 	name = nullptr;
 	size = 0;
 	start_block = new_start;
-	created = sim_counter;
 }
-Entry::Entry(string new_name, int new_start, int sim_counter){
+Entry::Entry(string new_name, int new_start){
 	name = new_name;
 	size = 0;
 	start_block = new_start;
-	created = sim_counter;
 }
-Entry::Entry(string new_name, size_t new_size, int new_start, int sim_counter){
+Entry::Entry(string new_name, size_t new_size, int new_start){
 	name = new_name;
 	size = new_size;
 	start_block = new_start;
-	created = sim_counter;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
