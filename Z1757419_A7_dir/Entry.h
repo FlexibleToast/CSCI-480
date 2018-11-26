@@ -17,9 +17,9 @@ class Entry
 {
   public:
 		//Constructors
-    Entry(int new_start);
-		Entry(string new_name, int new_start);
-		Entry(string new_name, size_t new_size, int new_start);
+    Entry(int new_start, int sim_counter);
+		Entry(string new_name, int new_start, int sim_counter);
+		Entry(string new_name, size_t new_size, int new_start, int sim_counter);
 
     //Accessor Methods
 		//Get Methods
@@ -36,9 +36,10 @@ class Entry
 		Entry& operator=(const Entry&);
 
 	private:
-		string name;				// Name of the entry
-		size_t size;				// Size in bytes of the entry
+		string name;			// Name of the entry
+		size_t size;			// Size in bytes of the entry
 		int start_block;	// Starting block in FAT12 of entry
+		int created;			// Simulation cycle created on
 };
 
 #endif

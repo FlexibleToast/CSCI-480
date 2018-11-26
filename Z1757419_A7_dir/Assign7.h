@@ -19,18 +19,22 @@
 // Prototyping statements
 void initialize_directory();
 void readline(string);
-int allocate(size_t);
+int allocate(size_t, int pass_start_block = 0);
+int reallocate(size_t, int);
+void deallocate(int);
 void tokenize(string, vector<string>&);
-int find_empty();
+int find_empty(int);
+void print_fat();
 
 // Set global constants
 #define HOW_OFTEN 6
 #define BLOCK_SIZE 512
-#define MAX_ENTRIES 12
-#define PRINT 240
+#define BLOCK_ENTRIES 12
+#define PRINT 24
 
 // Create global variables
 short fat[4096] = {0};	// FAT12 table
-list<Entry> directory;		// List of entries in the directory
+list<Entry> directory;	// List of entries in the directory
+	int sim_counter = 0;	// Tracks cycles of the simulation
 
 #endif
