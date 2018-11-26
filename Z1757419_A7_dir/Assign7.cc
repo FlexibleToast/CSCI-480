@@ -29,6 +29,11 @@ int main() {
 		readline(line);
 		sim_counter++;
 	}
+	list<Entry>::iterator it = directory.begin();
+	while(it != directory.end()){
+		cout << it->get_name() << endl;
+		it++;
+	}
   return 0;
 }
 /////////////////////////////////  Functions  //////////////////////////////////
@@ -40,8 +45,9 @@ Returns:
 *******************************************************************************/
 void initialize_directory(){
 	// Create "." current directory
-	Entry first(".", 512, allocate(512, find_empty(0)), sim_counter);
-	directory.push_back(first);
+	new_entry(".", 512);
+	// Create ".." parent directory
+	new_entry("..", 0);
 }
 /*******************************************************************************
 Function:
@@ -59,7 +65,20 @@ Use:
 Arguments:
 Returns:
 *******************************************************************************/
-int find_empty(int start = 0){
+void new_entry(string new_name, size_t new_size)
+{
+	Entry new_entry_item(new_name, new_size,
+		allocate(new_size, find_empty(0)), sim_counter);
+	directory.push_back(new_entry_item);
+	reallocate(512*ceil((float)directory.size()/BLOCK_ENTRIES), 0);
+}
+/*******************************************************************************
+Function:
+Use:
+Arguments:
+Returns:
+*******************************************************************************/
+int find_empty(int start){
 	int found = -1;
 	for(int empty = start; empty < 4096; empty++)
 	{
@@ -88,9 +107,7 @@ int allocate(size_t size, int pass_start_block){
 	}
 	// Else the size is greater than 0, find needed number of blocks
 	int current_block = start_block;
-	int needed_blocks = (size / BLOCK_SIZE);
-	if((size % BLOCK_SIZE) > 0)
-		needed_blocks++;
+	int needed_blocks = (ceil((float)size / BLOCK_SIZE));
 	for(int i = 0; i < needed_blocks; i++){
 		if(i == needed_blocks - 1)
 		{	// If at the last block mark it end -1 and return
@@ -98,8 +115,7 @@ int allocate(size_t size, int pass_start_block){
 			break;
 		}
 		fat[current_block] = -2; // Make current_block non empty so it isn't found
-		fat[current_block] = find_empty(current_block);
-		current_block = fat[current_block];
+		current_block = fat[current_block] = find_empty(current_block);
 	}
 	return start_block;
 }
@@ -110,12 +126,41 @@ Arguments:
 Returns:
 *******************************************************************************/
 int reallocate(size_t size, int start_block){
-	deallocate(start_block);
 	// Special case, size is 0
 	if(size == 0){
+		deallocate(start_block);
 		return -1;
 	}
-	return (allocate(size, start_block));
+	if(start_block == -1){	// If previously empty, find a starting block
+		start_block = find_empty();
+	}
+	// Initialize variables
+	int allocated_blocks = count_clusters(start_block);
+	int needed_blocks = (ceil((float)size / BLOCK_SIZE));
+	int current_block = start_block;
+	if(allocated_blocks == needed_blocks){	// No change in number of blocks
+		return start_block;
+	} else if(allocated_blocks < needed_blocks){	// Need more allocated blocks
+		int i = 0;
+		while(i++ < allocated_blocks - 1){	// Move to last block
+			current_block = fat[current_block];
+		}
+		current_block = fat[current_block] = find_empty();
+		while(++i < needed_blocks){	// Allocate new blocks
+			fat[current_block] = -1;	// Make current_block non-empty
+			current_block = fat[current_block] = find_empty(current_block);
+		}
+		fat[current_block] = -1;
+		return start_block;
+	} else {	// More space allocated than needed
+		int i = 0;
+		while(i++ < needed_blocks - 1){	// Move to end of needed blocks
+			current_block = fat[current_block];
+		}
+		deallocate(fat[current_block]); // Free rest of of blocks
+		fat[current_block] = -1;
+	}
+	return start_block;
 }
 /*******************************************************************************
 Function:
@@ -134,6 +179,23 @@ void deallocate(int start_block){
 		start_block = next_block;
 	}
 	fat[start_block] = 0;
+}
+/*******************************************************************************
+Function:
+Use:
+Arguments:
+Returns:
+*******************************************************************************/
+int count_clusters(int start_block){
+	int count = 0;
+	int current_block = start_block;
+	if(start_block == -1)	// Size 0, no clusters
+		return count;
+	while(fat[current_block] != -1){	// While not at last cluster, count
+		count++;
+		current_block = fat[current_block];
+	}
+	return ++count;
 }
 /*******************************************************************************
 Function:		void tokenize(string line, vector<string> &tokens)

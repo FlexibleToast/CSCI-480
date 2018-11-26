@@ -15,22 +15,25 @@
 #include <fstream>
 #include <vector>
 #include <string.h>
+#include <math.h>
 
 // Prototyping statements
 void initialize_directory();
 void readline(string);
+void new_entry(string, size_t);
+int find_empty(int start = 0);
 int allocate(size_t, int pass_start_block = 0);
 int reallocate(size_t, int);
 void deallocate(int);
+int count_clusters(int);
 void tokenize(string, vector<string>&);
-int find_empty(int);
 void print_fat();
 
 // Set global constants
 #define HOW_OFTEN 6
 #define BLOCK_SIZE 512
 #define BLOCK_ENTRIES 12
-#define PRINT 24
+#define PRINT 48
 
 // Create global variables
 short fat[4096] = {0};	// FAT12 table

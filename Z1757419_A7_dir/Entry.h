@@ -26,6 +26,7 @@ class Entry
 		inline string get_name() const { return name; };
 		inline size_t get_size() const{ return size; };
 		inline int get_start() const { return start_block; };
+		inline int get_created() const { return created; };
 
 		//Set Methods
 		inline void rename(string new_name) { name = new_name; };
