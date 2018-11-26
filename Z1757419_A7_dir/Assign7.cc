@@ -20,15 +20,18 @@ int main() {
 	}
 	string line;
 	initialize_directory();
+	cout << "Beginning of the FAT simulation" << endl;
 	while(getline(file, line))
 	{	// Read each line from the file for instructions
 		if(sim_counter % HOW_OFTEN == 0){	// Print current status every HOW_OFTEN
-			// Print stuff
+			print_directory();
+			print_fat();
 		}
-		readline(line);
+		if(!readline(line))
+			break;
 		sim_counter++;
 	}
-	list<Entry>::iterator it = directory.begin();
+	cout << "Simulation finished in " << sim_counter << " steps" << endl;
 	print_directory();
 	print_fat();
   return 0;
@@ -52,38 +55,52 @@ Use:
 Arguments:
 Returns:
 *******************************************************************************/
-void readline(string line){
+bool readline(string line){
 	vector<string> tokens;
 	tokenize(line, tokens);
-	if(tokens.size() == 0)
-		return;
+	if(tokens.size() == 0){
+		cerr << "Simulation encountered a blank line\n";
+		return false;
+	}
 	switch(tokens[0][0]){
 		case 'C':
 			cout << "Transaction:  Copy a file" << endl;
-			copy_entry(tokens[1], tokens[2]);
-			break;
+			if(copy_entry(tokens[1], tokens[2])){
+				cout << "Successfully copied " << tokens[1]
+					<< " to " << tokens[2] << endl;
+			}
+			return true;
 		case 'D':
 			cout << "Transaction:  Delete a file" << endl;
-			delete_entry(tokens[1]);
-			break;
+			if(delete_entry(tokens[1])){
+				cout << "Successfully deleted a file, " << tokens[1] << endl;
+			}
+			return true;
 		case 'N':
 			cout << "Transaction:  Add a new file" << endl;
-			new_entry(tokens[1], stoi(tokens[2]));
-			break;
+			if(new_entry(tokens[1], stoi(tokens[2]))){
+				cout << "Successfuly added a new file, " << tokens[1]
+					<< ", of size " << tokens[2] << endl;
+			}
+			return true;
 		case 'M':
 			cout << "Transaction:  Modify a file" << endl;
-			modify_entry(tokens[1], stoi(tokens[2]));
-			break;
+			if(modify_entry(tokens[1], stoi(tokens[2])))
+				cout << "Successfully modified a file, " << tokens[1] << endl;
+			return true;
 		case 'R':
 			cout << "Transaction:  Rename a file" << endl;
-			rename_entry(tokens[1], tokens[2]);
-			break;
+			if(rename_entry(tokens[1], tokens[2])){
+				cout << "Successfully changed the file name " << tokens[1]
+					<< " to " << tokens[2] << endl;
+			}
+			return true;
 		case '?':
-			cout << "\nEnd of the FAT simulation\n" << endl;
-			break;
+			cout << "\nEnd of the FAT simulation" << endl;
+			return false;
 		default:
 			cerr << tokens[0][0] << " not a valid simulation step" << '\n';
-			break;
+			return true;
 	}
 }
 /*******************************************************************************
@@ -92,18 +109,17 @@ Use:
 Arguments:
 Returns:
 *******************************************************************************/
-void copy_entry(string old_entry, string copied_entry){
+bool copy_entry(string old_entry, string copied_entry){
 	if(!(exist_entry(old_entry))){
 		cerr << "File entry " << old_entry << " not found." << '\n';
-		return;
+		return false;
 	} else if(exist_entry(copied_entry)){
 		cerr << "Cannot copy entry, " << copied_entry << " already exists" << '\n';
-		return;
+		return false;
 	} else {
 		list<Entry>::iterator it = find_entry(old_entry);
 		new_entry(copied_entry, it->get_size());
-		cout << "Successfully copied " << old_entry
-			<< " to " << copied_entry << endl;
+		return true;
 	}
 }
 /*******************************************************************************
@@ -112,7 +128,7 @@ Use:
 Arguments:
 Returns:
 *******************************************************************************/
-void delete_entry(string del_name){
+bool delete_entry(string del_name){
 	if(exist_entry(del_name)){
 		list<Entry>::iterator it = find_entry(del_name);
 		deallocate(it->get_start());
@@ -120,9 +136,10 @@ void delete_entry(string del_name){
 		reallocate(BLOCK_SIZE*ceil((float)directory.size()/BLOCK_ENTRIES), 0);
 		directory.begin()->resize
 			(BLOCK_SIZE*ceil((float)directory.size()/BLOCK_ENTRIES));
-		cout << "Successfully deleted a file, " << del_name << endl;
+		return true;
 	} else {
 		cerr << "File entry " << del_name << " not found." << '\n';
+		return false;
 	}
 }
 /*******************************************************************************
@@ -131,12 +148,12 @@ Use:
 Arguments:
 Returns:
 *******************************************************************************/
-void new_entry(string new_name, size_t new_size){
+bool new_entry(string new_name, size_t new_size){
 	// Check if already exists
 	if(exist_entry(new_name)){
 		cerr << "Cannot create new entry, " << new_name
 		 	<< " already exists."<< '\n';
-		return;
+		return false;
 	}
 	Entry new_entry_item(new_name, new_size,
 		allocate(new_size, find_empty(0)));
@@ -144,8 +161,7 @@ void new_entry(string new_name, size_t new_size){
 	reallocate(BLOCK_SIZE*ceil((float)directory.size()/BLOCK_ENTRIES), 0);
 	directory.begin()->resize
 		(BLOCK_SIZE*ceil((float)directory.size()/BLOCK_ENTRIES));
-	cout << "Successfuly added a new file, " << new_name
-		<< ", of size " << new_size << endl;
+	return true;
 }
 /*******************************************************************************
 Function:
@@ -153,16 +169,17 @@ Use:
 Arguments:
 Returns:
 *******************************************************************************/
-void modify_entry(string mod_name, size_t new_size){
+bool modify_entry(string mod_name, size_t new_size){
 	if(exist_entry(mod_name)){
 		list<Entry>::iterator it = find_entry(mod_name);
 		Entry temp = *it;
 		directory.erase(it);
 		new_entry(temp.get_name(), new_size);
 		deallocate(temp.get_start());
-		cout << "Successfully modified a file, " << mod_name << endl;
+		return true;
 	} else {
 		cerr << "File entry " << mod_name << " not found." << '\n';
+		return false;
 	}
 }
 /*******************************************************************************
@@ -171,21 +188,20 @@ Use:
 Arguments:
 Returns:
 *******************************************************************************/
-void rename_entry(string old_name, string new_name){
+bool rename_entry(string old_name, string new_name){
 	if(!(exist_entry(old_name))){
 		cerr << "File entry " << old_name << " not found." << '\n';
-		return;
+		return false;
 	} else if(exist_entry(new_name)){
 		cerr << "Can't rename entry, " << new_name << " already exists" << '\n';
-		return;
+		return false;
 	} else {
 		list<Entry>::iterator it = find_entry(old_name);
 		Entry temp = *it;
 		directory.erase(it);
 		temp.rename(new_name);
 		directory.push_back(temp);
-		cout << "Successfully changed the file name " << old_name
-			<< " to " << new_name << endl;
+		return true;
 	}
 }
 /*******************************************************************************
@@ -402,7 +418,7 @@ void print_fat(){
 		}
 		cout << setfill(' ') << setw(6) << right << fat[counter++];
 	}
-	cout << '\n';
+	cout << '\n' << endl;
 }
 /*******************************************************************************
 Function:		void print_entry(list<Entry>::iterator entry)
