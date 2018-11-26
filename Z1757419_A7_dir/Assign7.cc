@@ -29,10 +29,7 @@ int main() {
 		sim_counter++;
 	}
 	list<Entry>::iterator it = directory.begin();
-	while(it != directory.end()){
-		cout << it->get_name() << endl;
-		it++;
-	}
+	print_directory();
 	print_fat();
   return 0;
 }
@@ -120,7 +117,9 @@ void delete_entry(string del_name){
 		list<Entry>::iterator it = find_entry(del_name);
 		deallocate(it->get_start());
 		directory.erase(it);
-		reallocate(512*ceil((float)directory.size()/BLOCK_ENTRIES), 0);
+		reallocate(BLOCK_SIZE*ceil((float)directory.size()/BLOCK_ENTRIES), 0);
+		directory.begin()->resize
+			(BLOCK_SIZE*ceil((float)directory.size()/BLOCK_ENTRIES));
 		cout << "Successfully deleted a file, " << del_name << endl;
 	} else {
 		cerr << "File entry " << del_name << " not found." << '\n';
@@ -142,7 +141,9 @@ void new_entry(string new_name, size_t new_size){
 	Entry new_entry_item(new_name, new_size,
 		allocate(new_size, find_empty(0)));
 	directory.push_back(new_entry_item);
-	reallocate(512*ceil((float)directory.size()/BLOCK_ENTRIES), 0);
+	reallocate(BLOCK_SIZE*ceil((float)directory.size()/BLOCK_ENTRIES), 0);
+	directory.begin()->resize
+		(BLOCK_SIZE*ceil((float)directory.size()/BLOCK_ENTRIES));
 	cout << "Successfuly added a new file, " << new_name
 		<< ", of size " << new_size << endl;
 }
@@ -367,12 +368,66 @@ Use:
 Arguments:
 Returns:
 *******************************************************************************/
+void print_directory(){
+	cout << "\nDirectory Listing" << endl;
+	int total_size = 0, total_files = 0;
+	list<Entry>::iterator it = directory.begin();
+	while(it != directory.end()){
+		print_entry(it);
+		total_size += it++->get_size();
+		total_files++;
+	}
+	cout << "Files:" << setw(3) << total_files
+		<< "  Total Size:" << setw(7) << total_size << " bytes" << endl;
+}
+/*******************************************************************************
+Function:		void print_fat()
+Use:				Prints the FAT table with ENTRIES_PERLINE amount of entries on one
+						line and ENTRIES_PRINT total amount of entries
+Arguments:	none
+Returns:		none
+*******************************************************************************/
 void print_fat(){
-	int counter = 0;
-	while(counter < PRINT){
-		if(!(counter % BLOCK_ENTRIES) && !(counter == 0))
-			cout << '\n';
-		cout << setw(6) << right << fat[counter++];
+	cout << "\nContents of the File Allocation Table" << endl;
+	int counter = 0, line_head = 0;
+	cout << '#'  << setfill('0') << setw(3)<< line_head
+		<< '-' << setw(3) << ENTRIES_PERLINE - 1;
+	line_head += ENTRIES_PERLINE;
+	while(counter < ENTRIES_PRINT){
+		if(!(counter % ENTRIES_PERLINE) && !(counter == 0))
+		{
+			cout << '\n' << '#'  << setfill('0') << setw(3)<< line_head
+				<< '-' << setw(3) << line_head + ENTRIES_PERLINE - 1;
+			line_head += ENTRIES_PERLINE;
+		}
+		cout << setfill(' ') << setw(6) << right << fat[counter++];
 	}
 	cout << '\n';
+}
+/*******************************************************************************
+Function:		void print_entry(list<Entry>::iterator entry)
+Use:				Prints information including name, size, and clusters of an entry
+Arguments:	entry - List iterator for entry to be printed
+Returns:		none
+*******************************************************************************/
+void print_entry(list<Entry>::iterator entry){
+	int current_block = entry->get_start();
+	cout << "File name: " << setw(23) << left << entry->get_name()
+		<< "File Size: " << setw(6) << entry->get_size()
+		<< setw(20) << "\nCluster(s) in use:  ";
+	if(current_block == -1){
+		cout << setw(6) << right << "(none)";
+	} else {
+		int i = 0;
+		while(current_block != -1){
+			if((i % 12 == 0) && !(i == 0)){
+				cout << endl << setw(26) << current_block;
+			} else {
+				cout << setw(6) << right << current_block;
+			}
+			i++;
+			current_block = fat[current_block];
+		}
+	}
+	cout << endl;
 }

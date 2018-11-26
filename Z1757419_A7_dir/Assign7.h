@@ -33,13 +33,16 @@ void rename_entry(string, string);
 bool exist_entry(string);
 list<Entry>::iterator find_entry(string);
 void tokenize(string, vector<string>&);
+void print_directory();
 void print_fat();
+void print_entry(list<Entry>::iterator);
 
 // Set global constants
 #define HOW_OFTEN 6
 #define BLOCK_SIZE 512
 #define BLOCK_ENTRIES 12
-#define PRINT 240
+#define ENTRIES_PRINT 240
+#define ENTRIES_PERLINE 12
 
 // Create global variables
 short fat[4096] = {0};	// FAT12 table
