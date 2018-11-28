@@ -31,8 +31,6 @@ class Entry
 		inline void rename(string new_name) { name = new_name; };
 		inline void resize(size_t new_size) { size = new_size; };
 
-    //Utility Methods
-
 		//Operator Overload
 		Entry& operator=(const Entry&);
 
